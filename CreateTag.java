@@ -28,7 +28,7 @@ public class CreateTag {
             @Override
             public void keyPressed(KeyEvent e) {
                 if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-                    // Get text entered
+
                     String tagInput = textField.getText();
 
                     System.out.println("Tag: " + tagInput);

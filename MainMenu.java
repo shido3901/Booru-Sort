@@ -19,17 +19,13 @@ public class MainMenu implements ActionListener {
         frame.setTitle("Booru Sort");
         frame.setLocationRelativeTo(null);
 
-        // Set layout explicitly for positioning
         frame.setLayout(new BorderLayout());
 
-        // Left white panel (sidebar)
         mainPanel = new MainMenuPanel();
         mainPanel.addMouseListener(new PopClickListener());
 
-
         frame.add(mainPanel, BorderLayout.WEST);
 
-        // Optional center panel (black background)
         JPanel centerPanel = new JPanel();
         centerPanel.setBackground(new Color(32, 32, 32));
         centerPanel.addMouseListener(new PopClickListener());

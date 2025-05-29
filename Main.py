@@ -136,12 +136,17 @@ def folder_unselect(event):
     isFolder = False
     print("unselect")
 
+folder_in_progress = False
 
 #add folder
 def create_folder():
-
+    
     global folder_count
     global folder_label
+    
+    global folder_in_progress
+
+    folder_in_progress = True
 
     x = 20 + (folder_count % 10) * 150  
     y = 40 + (folder_count // 10) * 150
@@ -169,9 +174,9 @@ def create_folder():
     folder_rename.pack()
     folder_rename.focus_set()
 
-    
+    global folder_rename_enter
     def folder_rename_enter(event):
-       
+        global folder_in_progress
         folder_name_final = folder_rename.get()
 
         ##check if folder name is empty
@@ -182,9 +187,14 @@ def create_folder():
         folder_rename.bind("<Key>", folder_key_press)
 
         folder_rename.destroy()
-    
+        folder_in_progress = False
+
+        print('folder created')
+        
+
     folder_rename.bind("<Return>", folder_rename_enter)
     folder_rename.bind("<Escape>", folder_rename_enter)
+    
     
     def folder_key_press(event):
         current_text = folder_rename.get()
@@ -193,6 +203,7 @@ def create_folder():
         folder_rename.insert(0, new_text)
 
     folder_rename.bind("<Key>", folder_key_press)
+    
 
 
 ##button next to recent tags
@@ -224,8 +235,18 @@ folder_right_click.add_command(label="Delete Folder", command=create_tag_window)
 folder_right_click.add_separator()
 folder_right_click.add_command(label="New tag", command=create_tag_window)
 
-main_window.bind("<Button-3>", show_context_menu)
+def on_right_click(event):
+    if folder_in_progress:
+        folder_rename_enter(event)
+    else:
+        show_context_menu(event)
 
+
+def on_left_click(event):
+    if folder_in_progress:
+        folder_rename_enter(event)
+    else:
+        on_left_button_press(event)
 
 
 ##cursor hold click functionality
@@ -279,9 +300,15 @@ def on_mouse_move(event):
         ##print(f"Dragging at: ({event.x}, {event.y})")
         canvas.coords(rect, x_start, y_start, event.x, event.y)
 
+        
 
-main_window.bind("<Button-1>", on_left_button_press)  
+main_window.bind("<Button-1>", on_left_click)  
 main_window.bind("<ButtonRelease-1>", on_left_button_release)
 main_window.bind("<Motion>", on_mouse_move)
+
+
+main_window.bind("<Button-3>", on_right_click)
+main_window.bind("<Button-1>", on_left_click)
+
 
 main_window.mainloop()

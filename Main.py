@@ -4,6 +4,7 @@ from tkinter import ttk
 from PIL import ImageTk
 from PIL import Image
 import time
+from Folder import get_folder_position 
 
 main_window = tk.Tk()
 main_window.tk.call('tk', 'scaling', 1.5) 
@@ -84,11 +85,12 @@ label = tk.Label(tag_area_top, text = 'Pinned tags')
 label.pack(anchor = 'w', side='top')
 label.config(bg='#242323', fg="white")
 
-
+tag_in_progress = False
 #add tag
 def enter_key(event):
     global tag_frame
     global tag_name
+    global tag_in_progress
 
     tag_value = tag_name.get()
     if not tag_name.get().strip():
@@ -99,10 +101,17 @@ def enter_key(event):
         tag.pack(pady=2, padx=2, anchor='nw')
 
         tag_frame.destroy()
+        print('tag ' + tag_value + ' created')
+    
+    
+    tag_in_progress = False
 
 def create_tag_window():
     global tag_frame
     global tag_name
+    global tag_in_progress
+
+    tag_in_progress = True
 
     x = main_window.winfo_pointerx() - main_window.winfo_rootx()
     y = main_window.winfo_pointery() - main_window.winfo_rooty()
@@ -118,8 +127,8 @@ def create_tag_window():
     tag_name.focus_set()
 
     tag_name.bind("<Return>", enter_key)
-    tag_name.bind("<Escape>", enter_key)
-
+    if tag_in_progress:
+        tag_name.bind("<Escape>", enter_key)
 
 
 folder_count = 0
@@ -148,8 +157,7 @@ def create_folder():
 
     folder_in_progress = True
 
-    x = 20 + (folder_count % 10) * 150  
-    y = 40 + (folder_count // 10) * 150
+    x, y = get_folder_position(folder_count)
 
     folder_image = Image.open("folder.png").convert("RGBA")
     folder_photo = ImageTk.PhotoImage(folder_image)
@@ -240,6 +248,9 @@ def on_right_click(event):
         folder_rename_enter(event)
     else:
         show_context_menu(event)
+    
+    if tag_in_progress:
+        tag_frame.destroy()
 
 
 def on_left_click(event):
@@ -247,6 +258,11 @@ def on_left_click(event):
         folder_rename_enter(event)
     else:
         on_left_button_press(event)
+
+    if tag_in_progress:
+        tag_frame.destroy()
+        
+        
 
 
 ##cursor hold click functionality
@@ -265,7 +281,7 @@ def on_left_button_press(event):
     global y_start
     global rect
     left_click_hold = True  
-    print("left click", left_click_hold)
+    ##print("left click", left_click_hold)
     ##print(f"Starting coords: ({event.x}, {event.y})") 
     x_start = event.x
     y_start = event.y
@@ -277,7 +293,7 @@ def on_left_button_press(event):
 def on_left_button_release(event):
     global left_click_hold
     left_click_hold = False 
-    print("release True")
+    ##print("release True")
     canvas.coords(rect, 0,0,0,0)
 
 
@@ -301,7 +317,6 @@ def on_mouse_move(event):
         canvas.coords(rect, x_start, y_start, event.x, event.y)
 
         
-
 main_window.bind("<Button-1>", on_left_click)  
 main_window.bind("<ButtonRelease-1>", on_left_button_release)
 main_window.bind("<Motion>", on_mouse_move)

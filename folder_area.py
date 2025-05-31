@@ -1,33 +1,32 @@
 import tkinter as tk
 import time
-
-def test_show():
-    print("Test Show function was triggered!")
-
+from tag import create_tag_window
 
 def create_folder_area(parent):
     folder_area = tk.Frame(parent, bg="#242323", width=1600, height=1080)
     folder_area.grid(row=0, column=1, rowspan=6, sticky="nsew")
 
+
     folder_area.grid_rowconfigure(0, weight=1)
     folder_area.grid_columnconfigure(0, weight=1)
     
     global right_click_menu
-    right_click_menu = tk.Menu(folder_area, tearoff=0)
-    right_click_menu.add_command(label="View", command=test_show)
-    ##right_click_menu.add_separator()
-    right_click_menu.add_command(label="New Folder", command=test_show)
-    ##right_click_menu.add_separator()
-    right_click_menu.add_command(label="New tag", command=test_show)
+    right_click_menu = tk.Menu(parent, tearoff=0, bg="#333333", fg="white", activebackground="#555555", activeforeground="cyan", font=("Arial", 10))
+    right_click_menu.config(bg="#171717", bd=0, relief="flat")
+
+    right_click_menu.add_command(label="View", command=create_tag_window)
+    right_click_menu.add_separator()
+    right_click_menu.add_command(label="New Folder", command=create_tag_window)
+    right_click_menu.add_separator()
+    right_click_menu.add_command(label="New tag", command=lambda: create_tag_window(parent))
 
     return folder_area
 
 
-def show_context_menu(event):
+def folder_area_right_click(event):
         global right_click_menu
         if right_click_menu:
             right_click_menu.tk_popup(event.x_root, event.y_root)
-
 
 ##folder_right_click = tk.Menu(create_folder_area, tearoff=0)
 ##folder_right_click.add_command(label="View", command=create_tag_window)

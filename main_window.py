@@ -3,7 +3,7 @@ import tag
 from folder_area import SelectBox, create_folder_area, folder_area_right_click
 from side_panel import create_sidepanel_area
 from tag_panel import create_tag_panel
-from tag import tag_window_left_click, tag_window_right_click
+from tag import tag_window_left_click, tag_window_right_click, tag_properties, right_click_menu
 import tag
 
 main_window = tk.Tk()
@@ -36,6 +36,8 @@ main_window.bind("<Button-1>", tag_window_left_click)
 folder_area.bind("<Button-3>", folder_area_right_click)
 main_window.bind("<Button-3>", tag_window_right_click)
 
+
+
 current_column = 0
 current_row = 0  
 max_columns = 4  
@@ -48,7 +50,6 @@ def my_main_function():
         add_tag()
         print(tag_name + ' successfully created in main_window')
 
-
 def add_tag():
     global current_column, current_row, add_tag, tag_name
 
@@ -57,12 +58,16 @@ def add_tag():
         current_row += 1  
 
     tag = tk.Button(tag_panel_recent_content, text=tag_name, padx=5, pady=5)
-    
     tag.grid(row=current_row, column=current_column, pady=5, padx=5)
+
+    tag_properties(tag)
 
     current_column += 1  
 
 tag.register_callback(my_main_function)
+
+
+
 
 main_window.mainloop()
 

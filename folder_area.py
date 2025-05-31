@@ -6,7 +6,6 @@ def create_folder_area(parent):
     folder_area = tk.Frame(parent, bg="#242323", width=1600, height=1080)
     folder_area.grid(row=0, column=1, rowspan=6, sticky="nsew")
 
-
     folder_area.grid_rowconfigure(0, weight=1)
     folder_area.grid_columnconfigure(0, weight=1)
     

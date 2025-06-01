@@ -1,6 +1,6 @@
 import tkinter as tk
 import time
-from tag import create_tag_window
+from tag import add_tag
 
 def create_folder_area(parent):
     folder_area = tk.Frame(parent, bg="#242323", width=1600, height=1080)
@@ -8,31 +8,85 @@ def create_folder_area(parent):
 
     folder_area.grid_rowconfigure(0, weight=1)
     folder_area.grid_columnconfigure(0, weight=1)
-    
-    global right_click_menu
-    right_click_menu = tk.Menu(parent, tearoff=0, bg="#333333", fg="white", activebackground="#555555", activeforeground="cyan", font=("Arial", 10))
-    right_click_menu.config(bg="#171717", bd=0, relief="flat")
-
-    right_click_menu.add_command(label="View", command=create_tag_window)
-    right_click_menu.add_separator()
-    right_click_menu.add_command(label="New Folder", command=create_tag_window)
-    right_click_menu.add_separator()
-    right_click_menu.add_command(label="New tag", command=lambda: create_tag_window(parent))
 
     return folder_area
 
-
 def folder_area_right_click(event):
-        global right_click_menu
-        if right_click_menu:
-            right_click_menu.tk_popup(event.x_root, event.y_root)
+    right_click_menu = tk.Menu(event.widget, tearoff=0, bg="#333333", fg="white", activebackground="#555555", activeforeground="cyan", font=("Arial", 10))
+    right_click_menu.config(bg="#171717", bd=0, relief="flat")
 
-##folder_right_click = tk.Menu(create_folder_area, tearoff=0)
-##folder_right_click.add_command(label="View", command=create_tag_window)
-##folder_right_click.add_separator()
-##folder_right_click.add_command(label="Delete Folder", command=create_tag_window)
-##folder_right_click.add_separator()
-##folder_right_click.add_command(label="New tag", command=create_tag_window)
+    right_click_menu.add_command(label="View", command=lambda: print("yo"))
+    right_click_menu.add_separator()
+    right_click_menu.add_command(label="New Folder", command=lambda: print("yo"))
+    right_click_menu.add_separator()
+    right_click_menu.add_command(label="New tag", command=lambda: create_tag_window(event))
+
+    right_click_menu.tk_popup(event.x_root, event.y_root)
+
+tag_in_progress = False
+
+def create_tag_window(event):
+    global tag_frame, tag_entry, tag_in_progress
+   
+    if tag_in_progress is True:
+        tag_frame.destroy()
+        tag_in_progress = False
+
+    x = event.widget.winfo_pointerx() - event.widget.winfo_rootx()
+    y = event.widget.winfo_pointery() - event.widget.winfo_rooty()
+
+    tag_frame = tk.Frame(event.widget, width=320, height=60, borderwidth=2, relief=tk.RIDGE, bg='#171717')
+    tag_frame.place(x=x, y=y)  
+
+    label = tk.Label(tag_frame, text="Tag name:", fg="white", bg='#171717')
+    label.pack(pady=(5, 0), anchor='c', padx=5)
+
+    tag_entry = tk.Entry(tag_frame, bg="#242323", fg="white", insertbackground="white")
+    tag_entry.pack(padx=15, pady=15, fill='x')
+    tag_entry.focus_set()
+
+    tag_in_progress = True
+
+    tag_frame.bind("<Enter>", inside_frame)
+    tag_frame.bind("<Leave>", outside_frame)
+
+    tag_entry.bind("<Return>", confirm_tag)
+    tag_entry.bind("<Escape>", exit_tag_frame)
+
+def confirm_tag(event):
+    global tag_frame, tag_name, tag_entry
+    tag_name = tag_entry.get()
+    if not tag_entry.get().strip():
+        tag_frame.destroy()
+    else:
+        
+        add_tag(tag_name, "")
+        tag_frame.destroy()
+        print(f"tag '{tag_name}' created")
+
+in_frame = False
+    
+def tag_window_left_click(event):
+    global tag_frame, in_frame, tag_in_progress
+    if not in_frame and tag_in_progress is True:
+        tag_frame.destroy()
+
+def tag_window_right_click(event):
+    global tag_frame, in_frame, tag_in_progress
+    if not in_frame and tag_in_progress is True:
+        tag_frame.destroy()
+
+def exit_tag_frame(event):
+    global tag_frame
+    tag_frame.destroy()
+   
+def inside_frame(event):
+    global in_frame
+    in_frame = True
+
+def outside_frame(event):
+    global in_frame
+    in_frame = False
 
 class SelectBox:
     def __init__(self, canvas):
@@ -75,5 +129,3 @@ class SelectBox:
 
         if self.left_click_hold and self.rect:
             self.canvas.coords(self.rect, self.x_start, self.y_start, event.x, event.y)
-
-

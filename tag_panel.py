@@ -23,15 +23,14 @@ def tag_panel(parent):
     tag_panel_recent_content = tk.Frame(parent, bg="#171717", width=320, height=245, borderwidth=2, relief=tk.RIDGE)
     tag_panel_recent_content.grid(row=5, column=0, sticky="nsew")
 
-
     return tag_panel_pinned, pinned_panel, tag_panel_recent_label, tag_panel_recent_content, add_tag
 
 def open_window():
     tag_box = tk.Toplevel()
-    tag_box.title("Enter Description")
+    tag_box.title("Booru Sort Lite")
     tag_box.configure(bg='#171717')
-    width = 400
-    height = 350
+    width = 350
+    height = 210
     x = 100
     y = 300 
 
@@ -41,7 +40,7 @@ def open_window():
     label = tk.Label(tag_box, text="enter tags, separated by comma:", fg="white", bg='#171717', font=("Arial", 11))
     label.pack(pady=(10, 0), padx=10, anchor='c')
     
-    text_box = tk.Text(tag_box, bg="#242323", fg="white", insertbackground="white", wrap='word', height=10, font=("Arial", 14))
+    text_box = tk.Text(tag_box, bg="#242323", fg="white", insertbackground="white", wrap='word', height=3, font=("Arial", 14))
     text_box.pack(padx=15, pady=10, fill='both', expand=True)
     text_box.focus_set()
 
@@ -71,8 +70,8 @@ def open_window():
         for new_tag_name in tag_name_split:
             global tag_panel_recent_content
             tag_name = new_tag_name
+            create_tag_button(tag_panel_recent_content, tag_name, "")
             add_tag(tag_name, "")
-            create_tag_button(tag_panel_recent_content, tag_name)
             
             print(f"tag '{tag_name}' added.")
  

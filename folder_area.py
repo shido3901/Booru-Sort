@@ -1,6 +1,6 @@
 import tkinter as tk
 import time
-from tag import add_tag
+#from tag import add_tag
 from tag_panel import open_window
 
 def create_folder_area(parent):

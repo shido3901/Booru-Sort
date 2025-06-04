@@ -1,18 +1,25 @@
 import tkinter as tk
 import time
-#from tag import add_tag
 from tag_panel import open_window
+from PIL import Image, ImageTk
+
+
+
+
 
 def create_folder_area(parent):
     folder_area = tk.Frame(parent, bg="#242323", width=1600, height=1080)
     folder_area.grid(row=0, column=1, rowspan=6, sticky="nsew")
 
+    canvas = tk.Canvas(folder_area, bg="#242323", width=1600, height=1080)
+    canvas.grid(row=0, column=0, sticky="nsew")
+
     folder_area.grid_rowconfigure(0, weight=1)
     folder_area.grid_columnconfigure(0, weight=1)
 
-    return folder_area
+    return folder_area, canvas
 
-def folder_area_right_click(event):
+def folder_area_right_click(event, canvas):
     right_click_menu = tk.Menu(event.widget, tearoff=0, bg="#333333", fg="white", activebackground="#555555", activeforeground="cyan", font=("Arial", 10))
     right_click_menu.config(bg="#171717", bd=0, relief="flat")
 
@@ -21,9 +28,9 @@ def folder_area_right_click(event):
     right_click_menu.add_command(label="New Folder", command=lambda: print("yo"))
     right_click_menu.add_separator()
     right_click_menu.add_command(label="New tag", command=lambda: open_window())
+    right_click_menu.add_separator()
 
     right_click_menu.tk_popup(event.x_root, event.y_root)
-
 
 
 class SelectBox:
@@ -67,3 +74,7 @@ class SelectBox:
 
         if self.left_click_hold and self.rect:
             self.canvas.coords(self.rect, self.x_start, self.y_start, event.x, event.y)
+
+
+def test_function():
+    print('yuh')

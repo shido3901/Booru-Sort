@@ -124,8 +124,9 @@ class MainWindow(QMainWindow):
         next_page_click.clicked.connect(self.image_manager.next_page)
         previous_page_click.clicked.connect(self.image_manager.previous_page)
         self.image_manager.set_page_count_text(self.page_count)
-       
+        self.image_area.installEventFilter(self.image_manager)
 
+    
 
 
     def resizeEvent(self, event):

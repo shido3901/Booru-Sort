@@ -1,9 +1,11 @@
 # view_elements.py
 from PyQt5.QtWidgets import QLabel, QSizePolicy, QWidget, QPushButton
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QEvent, QObject
 
-class ImageManager:
+class ImageManager(QObject):
     def __init__(self, image_area):
+        super().__init__()
+
         self.image_size = 2
         self.image_area = image_area
 
@@ -14,9 +16,9 @@ class ImageManager:
         self.cell_size_height = 220
      
 
-
-        self.num_cols = self.image_area.width() // self.cell_size_width
-        self.num_rows = self.image_area.height() // self.cell_size_height
+        
+        self.num_cols = 0
+        self.num_rows = 0
 
         self.max_column = 6
         self.row = 2
@@ -170,17 +172,12 @@ class ImageManager:
 
 
 
-def change_size(self):
-        latest_num_cols = self.image_area.width() // self.image_manager.image_cell_width
-        latest_num_rows = self.image_area.height() // self.image_manager.image_cell_height
-        self.image_manager.set_image_size(self.image_area_layout, latest_num_cols, latest_num_rows)
-
-"""def eventFilter(self, source, event):
+    def eventFilter(self, source, event):
         if source == self.image_area and event.type() == QEvent.Wheel:
             delta = event.angleDelta().y()
             if delta > 0:
-                self.previous_page_click()
+                self.previous_page()
             else:
-                self.next_page_click()
-            return True
-        return super().eventFilter(source, event)"""
+                self.next_page()
+            return True  # Event was handled
+        return False  # Pass other events through

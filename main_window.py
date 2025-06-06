@@ -11,17 +11,10 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Booru Sort Lite")
-        self.setGeometry(700, 300, 1920, 1200)
+        self.setGeometry(700, 300, 1920, 1080)
         self.setStyleSheet("background-color: black;")
 
-        self.image_manager = ImageManager()
-
         self.initUI()
-
-        self.num_cols = self.image_area.width() // self.image_manager.image_cell_width
-        self.num_rows = self.image_area.height() // self.image_manager.image_cell_height
-
-        self.image_manager.refresh_image_area(self.image_area_layout, self.num_cols, self.num_rows)
 
     def initUI(self):
         main_window = QWidget()
@@ -73,7 +66,7 @@ class MainWindow(QMainWindow):
 
         tag_button = QPushButton("change size", self.options_bar)
         tag_button.setStyleSheet("color: white; background-color: #606060; border: none;")
-        tag_button.clicked.connect(self.change_size)
+        tag_button.clicked.connect(lambda: self.image_manager.set_image_size(self.image_area_layout))
         tag_button.setFixedSize(120, 40)
         options_layout.addWidget(tag_button, alignment=Qt.AlignCenter)
 
@@ -91,7 +84,6 @@ class MainWindow(QMainWindow):
         previous_page_click = QPushButton("Previous Page", self.bottom_bar)
         previous_page_click.setStyleSheet("color: white; background-color: #606060; border: none;")
         previous_page_click.setFixedSize(120, 40)
-        previous_page_click.clicked.connect(self.previous_page_click)
 
         self.page_count = QLabel("", self.bottom_bar)
         self.page_count.setStyleSheet("color: white; font-size: 20px; font-weight: bold;")
@@ -100,7 +92,6 @@ class MainWindow(QMainWindow):
         next_page_click = QPushButton("Next Page", self.bottom_bar)
         next_page_click.setStyleSheet("color: white; background-color: #606060; border: none;")
         next_page_click.setFixedSize(120, 40)
-        next_page_click.clicked.connect(self.next_page_click)
 
         bottom_bar_layout.addWidget(previous_page_click, alignment=Qt.AlignLeft)
         bottom_bar_layout.addWidget(self.page_count, alignment=Qt.AlignCenter)
@@ -128,41 +119,19 @@ class MainWindow(QMainWindow):
         self.image_area.installEventFilter(self)
         add_tag_to_grid(self.tag_list_layout)
 
+
+        self.image_manager = ImageManager(self.image_area)
+        next_page_click.clicked.connect(self.image_manager.next_page)
+        previous_page_click.clicked.connect(self.image_manager.previous_page)
+        self.image_manager.set_page_count_text(self.page_count)
+       
+
+
+
     def resizeEvent(self, event):
-        latest_num_cols = self.image_area.width() // self.image_manager.image_cell_width
-        latest_num_rows = self.image_area.height() // self.image_manager.image_cell_height
+        super().resizeEvent(event)
+        self.image_manager.resizeEvent(event)
 
-        if latest_num_cols != self.num_cols or latest_num_rows != self.num_rows:
-            self.num_cols = latest_num_cols
-            self.num_rows = latest_num_rows
-            self.image_manager.refresh_image_area(self.image_area_layout, self.num_cols, self.num_rows)
-
-        event.accept()
-
-    def change_size(self):
-        latest_num_cols = self.image_area.width() // self.image_manager.image_cell_width
-        latest_num_rows = self.image_area.height() // self.image_manager.image_cell_height
-        self.image_manager.set_image_size(self.image_area_layout, latest_num_cols, latest_num_rows)
-
-    def next_page_click(self):
-        latest_num_cols = self.image_area.width() // self.image_manager.image_cell_width
-        latest_num_rows = self.image_area.height() // self.image_manager.image_cell_height
-        self.image_manager.next_page(self.image_area_layout, latest_num_cols, latest_num_rows)
-
-    def previous_page_click(self):
-        latest_num_cols = self.image_area.width() // self.image_manager.image_cell_width
-        latest_num_rows = self.image_area.height() // self.image_manager.image_cell_height
-        self.image_manager.previous_page(self.image_area_layout, latest_num_cols, latest_num_rows)
-
-    def eventFilter(self, source, event):
-        if source == self.image_area and event.type() == QEvent.Wheel:
-            delta = event.angleDelta().y()
-            if delta > 0:
-                self.previous_page_click()
-            else:
-                self.next_page_click()
-            return True
-        return super().eventFilter(source, event)
 
 def main():
     app = QApplication(sys.argv)

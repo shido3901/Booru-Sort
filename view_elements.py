@@ -15,8 +15,6 @@ class ImageManager(QObject):
         self.cell_size_width = 180
         self.cell_size_height = 220
      
-
-        
         self.num_cols = 0
         self.num_rows = 0
 
@@ -31,10 +29,9 @@ class ImageManager(QObject):
         self.amount_on_current_page = 0
         self.total_on_screen = 0 #images + blank frames
 
-        self.entity_count = 456
+        self.entity_count = 457
 
         self.image_size_selection = 2
-
 
         
     def set_image_size(self, image_area_layout):
@@ -62,8 +59,6 @@ class ImageManager(QObject):
             self.image_size_selection = 3
         elif self.image_size_selection == 3:
             
-
-
             self.image_cell_width = 225
             self.image_cell_height = 300
 
@@ -101,8 +96,6 @@ class ImageManager(QObject):
     def set_page_count_text(self, text):
         self.page_count_text = text
 
-
-
     def add_image_to_area(self, layout):
         row = 0
         col = 0
@@ -129,10 +122,6 @@ class ImageManager(QObject):
                 col = 0
                 row += 1
 
-
-
-
-
     def next_page(self):
         if self.starting_count + self.amount_on_current_page != self.entity_count:
             self.starting_count = self.amount_on_current_page + self.starting_count
@@ -146,9 +135,16 @@ class ImageManager(QObject):
               
             #print(self.total_on_screen)
             self.refresh_image_area(self.image_area.layout())
+
+    def skip_to_last(self):
+        self.starting_count = self.entity_count - self.total_on_screen
+        self.refresh_image_area(self.image_area.layout())
+
+
+    def skip_to_previous(self):
+        self.starting_count = 0
+        self.refresh_image_area(self.image_area.layout())
             
-
-
     def resizeEvent(self, event):
   
         latest_num_cols = self.image_area.width() // self.cell_size_width
@@ -160,17 +156,6 @@ class ImageManager(QObject):
             self.num_rows = latest_num_rows
 
         self.refresh_image_area(self.image_area.layout())
-
-
-
-     
-
-
-
-    
-
-
-
 
     def eventFilter(self, source, event):
         if source == self.image_area and event.type() == QEvent.Wheel:

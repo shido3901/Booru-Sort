@@ -164,5 +164,5 @@ class ImageManager(QObject):
                 self.previous_page()
             else:
                 self.next_page()
-            return True  # Event was handled
-        return False  # Pass other events through
+            return True 
+        return False 

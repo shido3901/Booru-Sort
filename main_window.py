@@ -5,7 +5,9 @@ from PyQt5.QtGui import QFont
 from PyQt5.QtCore import Qt, QEvent
 
 from view_elements import ImageManager
-from taglist import TagListManager
+from taglist import TagListManager, RecentTags
+
+import json
 
 
 class MainWindow(QMainWindow):
@@ -22,7 +24,6 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(main_window)
 
         #=======left panel===========
-        
 
         self.settings_panel = QWidget(main_window)
         self.settings_panel.setMinimumWidth(320)
@@ -72,31 +73,42 @@ class MainWindow(QMainWindow):
         create_tag_button = QPushButton("yy", self.tag_list_panel)
         create_tag_button.setStyleSheet("color: white; background-color; black border: none;")
         create_tag_button.setFixedSize(70, 40)
-        
-       
-
 
         self.tag_list_area = QWidget(self.tag_list_panel)
         self.tag_list_area.setMinimumWidth(320)
         self.tag_list_area.setMaximumWidth(520)
-        self.tag_list_area.setMinimumHeight(900)
-        self.tag_list_area.setMaximumHeight(900)
-        self.tag_list_area.setStyleSheet("background-color: #112233")
+        self.tag_list_area.setMinimumHeight(200)
+        self.tag_list_area.setMaximumHeight(350)
+        self.tag_list_area.setStyleSheet("background-color: #112233") ##112233
 
 
         self.tag_list_area_layout = QGridLayout()
         self.tag_list_area.setLayout(self.tag_list_area_layout)
 
+        self.tag_list_recent_panel = QWidget(self.tag_list_panel)
+        self.tag_list_recent_panel.setMinimumWidth(320)
+        self.tag_list_recent_panel.setMaximumWidth(520)
+        self.tag_list_recent_panel.setMinimumHeight(200)
+        self.tag_list_recent_panel.setMaximumHeight(350)
+        self.tag_list_recent_panel.setStyleSheet("background-color: #112233")
+
+        self.tag_list_recent_panel_layout = QGridLayout()
+        self.tag_list_recent_panel.setLayout(self.tag_list_recent_panel_layout)
+
+
+        self.recent_tag_list = RecentTags(self.tag_list_recent_panel, self.tag_list_recent_panel_layout)
+
+        
+
         self.tag_list_panel_layout.addWidget(tag_label, 0, 0)
         self.tag_list_panel_layout.addWidget(create_tag_button, 0, 1)
         self.tag_list_panel_layout.addWidget(self.tag_list_area, 1, 0)
+        self.tag_list_panel_layout.addWidget(self.tag_list_recent_panel, 2, 0)
 
-   
-        self.tag_list_manager = TagListManager(self.tag_list_area, self.tag_list_area_layout)
+        self.tag_list_manager = TagListManager(self.tag_list_area, self.tag_list_area_layout,
+                                               self.tag_list_recent_panel, self.tag_list_recent_panel_layout)
+        
         create_tag_button.clicked.connect(self.tag_list_manager.create_tag_window)  
-
-      
-
 
         
         #========middle area========
@@ -109,7 +121,6 @@ class MainWindow(QMainWindow):
                                       "border-radius: 10px;"
                                       "background-color: #112233; }")
         
-
         self.search_bar = QWidget(main_window)
         self.search_bar.setMinimumWidth(200)
         self.search_bar.setMinimumHeight(70)
@@ -118,7 +129,6 @@ class MainWindow(QMainWindow):
         self.search_bar.setStyleSheet("#searchBar { border: 2px solid #1f618d;"
                                       "border-radius: 10px;"
                                       "background-color: #112233; }")
-
 
         text_box = QLineEdit(self.search_bar)
         text_box.setPlaceholderText("Search Example: black_cat")

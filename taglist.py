@@ -5,14 +5,17 @@ from tag import TagManager
 import json
 
 class TagListManager():
-    def __init__(self, tag_list_area, tag_list_area_layout, parent=None):
+    def __init__(self, tag_list_area, tag_list_area_layout, 
+                 tag_list_recent_panel, tag_list_recent_panel_layout, parent=None):
         
         self.tag_list_area = tag_list_area
         self.tag_list_area_layout = tag_list_area_layout 
         self.parent = parent
         self.tag_list = []
-      
-    
+
+        self.add_tag_recent = RecentTags(tag_list_recent_panel, tag_list_recent_panel_layout)
+
+
     def create_tag_window(self):
        dialog = TagWindow(self)
        dialog.exec_()
@@ -40,8 +43,8 @@ class TagListManager():
                 padding: 10px;
                 border-radius: 5px;
             """)
-            tag_button.setFont(QFont("Arial", 12))
-            tag_button.clicked.connect(lambda checked=False, name=tag_name: self.tag_load_images(name))
+            tag_button.setFont(QFont("Arial", 10))
+            tag_button.clicked.connect(lambda checked=False, name=tag_name: self.add_tag_recent.recent_tag_add(name))
 
             self.tag_list_area_layout.addWidget(tag_button, i, 0, alignment=Qt.AlignLeft)
 
@@ -52,17 +55,66 @@ class TagListManager():
        
     def tag_load_images(self, tag_name):
  
-    
         self.tag_manager = TagManager(tag_name)
         self.tag_manager.print_tag_name()
        
-
         if tag_name in self.tag_list:
         
             self.tag_list.remove(tag_name)
             self.tag_list.insert(0, tag_name)
       
             self.refresh_list()
+
+class RecentTags():
+    def __init__(self, tag_list_recent_panel, tag_list_recent_panel_layout):
+
+        self.tag_list_recent_panel = tag_list_recent_panel_layout
+  
+        self.recent_tag_list = []
+      
+    
+    def recent_tag_add(self, name):
+        self.tag_name = name
+        if self.tag_name in self.recent_tag_list:
+
+            self.recent_tag_list.remove(self.tag_name)
+        self.recent_tag_list.insert(0, self.tag_name)
+
+
+        self.refresh_recent_list()
+     
+    def load_recent_buttons(self):
+        print(f' THIS IS THE LIST {self.recent_tag_list} ')
+
+        for i, self.tag_name in enumerate(self.recent_tag_list):
+            recent_tag_button = QPushButton(self.tag_name)
+            recent_tag_button.setStyleSheet("""
+                background-color: #333333;
+                color: white;
+                padding: 10px;
+                border-radius: 5px;
+            """)
+            recent_tag_button.setFont(QFont("Arial", 10))
+            recent_tag_button.clicked.connect(lambda checked=False, name=self.tag_name: self.recent_tag_add(name))
+            print(f'NEW BUTTON CREATED {self.tag_name}')
+            self.tag_list_recent_panel.addWidget(recent_tag_button, i, 0, alignment=Qt.AlignLeft)
+
+
+
+    def clear_recent_tags(self):
+     
+        while self.tag_list_recent_panel.count():
+            item = self.tag_list_recent_panel.takeAt(0)
+            widget = item.widget()
+            if widget is not None:
+                widget.deleteLater()
+
+    
+ 
+    def refresh_recent_list(self):
+
+        self.clear_recent_tags()
+        self.load_recent_buttons()
 
 
 

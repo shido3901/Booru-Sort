@@ -6,8 +6,9 @@ from PyQt5.QtCore import Qt, QEvent
 
 from view_elements import ImageManager
 from taglist import TagListManager, RecentTags
+from user_profiles import ProfileManager
 
-import json
+
 
 
 class MainWindow(QMainWindow):
@@ -35,22 +36,14 @@ class MainWindow(QMainWindow):
                                           "border: 2px solid #1f618d")
         
         self.settings_panel_layout = QVBoxLayout()
-        profile = QPushButton("Profile", self.settings_panel)
-        profile.setStyleSheet("color: white; background-color; black border: none;")
-        profile.setFixedSize(100, 60)
-        self.settings_panel_layout.addWidget(profile, alignment=Qt.AlignLeft)
+        self.user_profile = ProfileManager()
+        self.profile_button = QPushButton("Profile", self.settings_panel)
+        self.profile_button.setStyleSheet("color: white; background-color: black; border: none;")
+        self.profile_button.setFixedSize(100, 60)
+        self.settings_panel_layout.addWidget(self.profile_button, alignment=Qt.AlignLeft)
 
-        
-        """profile = QPushButton("Testing", self.settings_panel)
-        profile.setStyleSheet("color: white; background-color; black border: none;")
-        profile.setFixedSize(100, 60)
-        self.settings_panel_layout.addWidget(profile, alignment=Qt.AlignCenter)
 
-        
-        profile = QPushButton("Testing", self.settings_panel)
-        profile.setStyleSheet("color: white; background-color; black border: none;")
-        profile.setFixedSize(100, 60)
-        self.settings_panel_layout.addWidget(profile, alignment=Qt.AlignRight)"""
+        self.profile_button.clicked.connect(self.user_profile.show) 
 
         self.tag_list_panel = QWidget(main_window)
         self.tag_list_panel.setMinimumWidth(320)
@@ -95,18 +88,22 @@ class MainWindow(QMainWindow):
         self.tag_list_recent_panel_layout = QGridLayout()
         self.tag_list_recent_panel.setLayout(self.tag_list_recent_panel_layout)
 
-
-        self.recent_tag_list = RecentTags(self.tag_list_recent_panel, self.tag_list_recent_panel_layout)
-
         
+        self.tag_list_manager = TagListManager(self.tag_list_area, self.tag_list_area_layout,
+                                               self.tag_list_recent_panel, 
+                                               self.tag_list_recent_panel_layout,)
+
+
+        self.recent_tag_list = RecentTags(self.tag_list_recent_panel, 
+                                          self.tag_list_recent_panel_layout,
+                                          self.tag_list_manager)
+
 
         self.tag_list_panel_layout.addWidget(tag_label, 0, 0)
         self.tag_list_panel_layout.addWidget(create_tag_button, 0, 1)
         self.tag_list_panel_layout.addWidget(self.tag_list_area, 1, 0)
         self.tag_list_panel_layout.addWidget(self.tag_list_recent_panel, 2, 0)
 
-        self.tag_list_manager = TagListManager(self.tag_list_area, self.tag_list_area_layout,
-                                               self.tag_list_recent_panel, self.tag_list_recent_panel_layout)
         
         create_tag_button.clicked.connect(self.tag_list_manager.create_tag_window)  
 
@@ -256,8 +253,6 @@ class MainWindow(QMainWindow):
         previous_page_click.clicked.connect(self.image_manager.previous_page)
         skip_to_last.clicked.connect(self.image_manager.skip_to_last)
         skip_to_previous.clicked.connect(self.image_manager.skip_to_previous)
-
-        
 
     
     def resizeEvent(self, event):

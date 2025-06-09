@@ -42,7 +42,7 @@ class DeleteProfileDialog(QDialog):
         self.setFixedSize(300, 150)
         layout = QVBoxLayout()
 
-        label = QLabel(f"Are you sure you want to delete profile: {profile_name}?")
+        label = QLabel(f"delete '{profile_name}'?")
         layout.addWidget(label)
 
         button_layout = QHBoxLayout()
@@ -82,11 +82,9 @@ class ProfileManager(QWidget):
                 names = data.get("users", [])
                 self.selected_data["selected_user"] = data.get("selected_user")
 
-                # Load all profiles
                 for name in names:
                     self.add_profile_button(name, save=False)
 
-                # If selected_user is None, select the first profile as default
                 if self.selected_data["selected_user"] is None and names:
                     self.selected_data["selected_user"] = names[0]
                     print("No selected user found. Defaulting to first profile:", self.selected_data["selected_user"])
@@ -125,6 +123,7 @@ class ProfileManager(QWidget):
                 background-color: #666;
             }
         """)
+        
         add_btn.clicked.connect(self.show_create_dialog)
         self.layout.addWidget(add_btn, len(self.profile_buttons) // 4, len(self.profile_buttons) % 4)
         self.profile_buttons.append(add_btn)

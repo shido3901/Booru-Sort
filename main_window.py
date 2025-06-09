@@ -9,8 +9,6 @@ from taglist import TagListManager, RecentTags
 from user_profiles import ProfileManager
 
 
-
-
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -19,6 +17,8 @@ class MainWindow(QMainWindow):
         self.setStyleSheet("background-color: #010c1c;")
 
         self.initUI()
+
+        
 
     def initUI(self):
         main_window = QWidget()
@@ -35,44 +35,69 @@ class MainWindow(QMainWindow):
                                           "border-radius: 10px;" 
                                           "border: 2px solid #1f618d")
         
-        self.settings_panel_layout = QVBoxLayout()
+        self.settings_panel_layout = QHBoxLayout(self.settings_panel)
         self.user_profile = ProfileManager()
         self.profile_button = QPushButton("Profile", self.settings_panel)
         self.profile_button.setStyleSheet("color: white; background-color: black; border: none;")
-        self.profile_button.setFixedSize(100, 60)
         self.settings_panel_layout.addWidget(self.profile_button, alignment=Qt.AlignLeft)
-
 
         self.profile_button.clicked.connect(self.user_profile.show) 
 
         self.tag_list_panel = QWidget(main_window)
         self.tag_list_panel.setMinimumWidth(320)
         self.tag_list_panel.setMaximumWidth(520)
+        self.tag_list_panel.setMaximumHeight(900)
         self.tag_list_panel.setObjectName("tagPanel")
-        self.tag_list_panel.setStyleSheet("#tagPanel {background-color: #112233;"
+        self.tag_list_panel.setStyleSheet("#tagPanel {background-color: green;"
                                           "border-radius: 10px;" 
                                           "border: 2px solid #1f618d }")
         
-        self.tag_list_panel_layout = QGridLayout()
-        self.tag_list_panel_layout.setContentsMargins(10, 0, 10, 0)
-        self.tag_list_panel_layout.setHorizontalSpacing(20)
-        self.tag_list_panel.setLayout(self.tag_list_panel_layout)
+        #112233
         
-        tag_label = QLabel("tags", self.tag_list_panel)
-        tag_label.setStyleSheet("color: white; font-size: 25px; ")
-        tag_label.setFixedHeight(50)
-   
+        self.tag_top_bar = QWidget(self.tag_list_panel)
+        self.tag_top_bar.setMinimumWidth(320)
+        self.tag_top_bar.setMaximumWidth(520)
+        self.tag_top_bar.setMinimumHeight(50)
+        self.tag_top_bar.setMaximumHeight(50)
+        self.tag_top_bar.setObjectName("tagPanel")
+        self.tag_top_bar.setStyleSheet("#tagPanel {background-color: orange;"
+                                          "border-radius: 10px;" 
+                                          "border: 2px solid #1f618d }")
+        
+        self.tag_top_bar_layout = QHBoxLayout(self.tag_top_bar)
+        self.tag_top_bar_layout.setContentsMargins(0,0,0,0)
+        self.tag_top_bar_layout.setSpacing(0)
+        self.tag_top_bar.setLayout(self.tag_top_bar_layout)
 
-        create_tag_button = QPushButton("yy", self.tag_list_panel)
-        create_tag_button.setStyleSheet("color: white; background-color; black border: none;")
-        create_tag_button.setFixedSize(70, 40)
+        self.tag_label = QLabel("tags", self.tag_top_bar)
+        self.tag_label.setStyleSheet("color: white; font-size: 28px; ")
+        self.tag_label.setMinimumHeight(50)
+        self.tag_label.setMinimumWidth(65)
+        self.tag_label.setMaximumWidth(65)
+
+        create_tag_button = QPushButton("+", self.tag_top_bar)
+        create_tag_button.setStyleSheet("color: white; background-color; black border: none; font-size: 30px;")
+        
+       
+        create_tag_button.setMinimumHeight(50)
+        create_tag_button.setMinimumWidth(30)
+        create_tag_button.setMaximumWidth(30)
+     
+
+        self.tag_top_bar_layout.addWidget(self.tag_label)
+        self.tag_top_bar_layout.addWidget(create_tag_button, alignment=Qt.AlignLeft)
+
+        
+        self.tag_list_panel_layout = QVBoxLayout(self.tag_list_panel)
+        self.tag_list_panel.setLayout(self.tag_list_panel_layout)
+
+        
 
         self.tag_list_area = QWidget(self.tag_list_panel)
         self.tag_list_area.setMinimumWidth(320)
         self.tag_list_area.setMaximumWidth(520)
-        self.tag_list_area.setMinimumHeight(200)
-        self.tag_list_area.setMaximumHeight(350)
-        self.tag_list_area.setStyleSheet("background-color: #112233") ##112233
+        self.tag_list_area.setMinimumHeight(300)
+        self.tag_list_area.setStyleSheet("background-color: white") ##112233
 
 
         self.tag_list_area_layout = QGridLayout()
@@ -81,9 +106,9 @@ class MainWindow(QMainWindow):
         self.tag_list_recent_panel = QWidget(self.tag_list_panel)
         self.tag_list_recent_panel.setMinimumWidth(320)
         self.tag_list_recent_panel.setMaximumWidth(520)
-        self.tag_list_recent_panel.setMinimumHeight(200)
-        self.tag_list_recent_panel.setMaximumHeight(350)
-        self.tag_list_recent_panel.setStyleSheet("background-color: #112233")
+        self.tag_list_recent_panel.setMinimumHeight(500)
+        self.tag_list_recent_panel.setStyleSheet("background-color: purple")
+        self.tag_list_recent_panel.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
         self.tag_list_recent_panel_layout = QGridLayout()
         self.tag_list_recent_panel.setLayout(self.tag_list_recent_panel_layout)
@@ -98,11 +123,13 @@ class MainWindow(QMainWindow):
                                           self.tag_list_recent_panel_layout,
                                           self.tag_list_manager)
 
+       
+        self.tag_list_panel_layout.addWidget(self.tag_top_bar, alignment=Qt.AlignTop)
 
-        self.tag_list_panel_layout.addWidget(tag_label, 0, 0)
-        self.tag_list_panel_layout.addWidget(create_tag_button, 0, 1)
-        self.tag_list_panel_layout.addWidget(self.tag_list_area, 1, 0)
-        self.tag_list_panel_layout.addWidget(self.tag_list_recent_panel, 2, 0)
+        self.tag_list_panel_layout.addWidget(self.tag_list_area, alignment=Qt.AlignTop)
+        self.tag_list_panel_layout.addWidget(self.tag_list_recent_panel, alignment=Qt.AlignTop)
+        self.tag_list_panel_layout.setSpacing(0)
+        
 
         
         create_tag_button.clicked.connect(self.tag_list_manager.create_tag_window)  
@@ -192,7 +219,7 @@ class MainWindow(QMainWindow):
         bottom_bar_layout.setHorizontalSpacing(20)
         self.bottom_bar.setLayout(bottom_bar_layout)
 
-        # Buttons
+
         previous_page_click = QPushButton("Previous Page", self.bottom_bar)
         previous_page_click.setStyleSheet("color: white; background-color: #606060; border: none;")
         previous_page_click.setFixedSize(120, 40)
@@ -213,7 +240,7 @@ class MainWindow(QMainWindow):
         next_page_click.setStyleSheet("color: white; background-color: #606060; border: none;")
         next_page_click.setFixedSize(120, 40)
 
-        # Add widgets to layout (all in row 0, different columns)
+      
         bottom_bar_layout.addWidget(previous_page_click, 0, 0)
         bottom_bar_layout.addWidget(skip_to_previous, 0, 1)
         bottom_bar_layout.addWidget(self.page_count, 0, 2, alignment=Qt.AlignCenter)

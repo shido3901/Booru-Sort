@@ -3,7 +3,7 @@ from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QLabel, QTextEdit,
 
 from PyQt5.QtGui import QFont, QTextCursor
 from PyQt5.QtCore import QObject, QEvent, Qt
-from tag import TagManager
+#from tag import TagManager
 
 import json
 
@@ -102,7 +102,7 @@ class TagListManager(QObject):
 
     def tag_load_images(self, tag_name):  #tag.py module
  
-        self.tag_manager = TagManager(tag_name)
+        #self.tag_manager = TagManager(tag_name)
 
         if tag_name in self.tag_list:
         
@@ -140,7 +140,7 @@ class TagListManager(QObject):
             tag_button.clicked.connect(lambda checked=False, name=tag_name: self.add_tag_recent.recent_tag_add(name))
             tag_button.installEventFilter(self)
 
-            self.tag_list_area_layout.addWidget(tag_button, i, 0, alignment=Qt.AlignLeft)
+            self.tag_list_area_layout.addWidget(tag_button, i, 0, alignment=Qt.AlignTop)
 
 
     def eventFilter(self, obj, event):

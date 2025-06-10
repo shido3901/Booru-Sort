@@ -114,7 +114,7 @@ class ImageManager(QObject):
             label.setMaximumHeight(self.image_cell_height)
             label.setMaximumWidth(self.image_cell_width)
             label.setAlignment(Qt.AlignCenter)
-            label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+          
 
             layout.addWidget(label, row, col)
             col += 1

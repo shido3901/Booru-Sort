@@ -1,9 +1,9 @@
 from PyQt5.QtWidgets import (
     QWidget, QPushButton, QVBoxLayout, QHBoxLayout, QGridLayout, QDialog,
-    QLabel, QLineEdit, QApplication, QMenu, QAction, QMessageBox
+    QLabel, QLineEdit, QApplication, 
 )
 from PyQt5.QtGui import QFont
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, pyqtSignal
 import sys
 import json
 
@@ -11,6 +11,8 @@ class CreateProfileDialog(QDialog):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("users")
+
+        self.setWindowFlags(Qt.Window | Qt.CustomizeWindowHint)
         self.setFixedSize(300, 150)
         layout = QVBoxLayout()
 
@@ -60,6 +62,8 @@ class DeleteProfileDialog(QDialog):
         return self.result() == QDialog.Accepted
 
 class ProfileManager(QWidget):
+    profile_selected = pyqtSignal()
+    
     def __init__(self):
         super().__init__()
 
@@ -68,6 +72,9 @@ class ProfileManager(QWidget):
 
         self.setWindowTitle("users")
         self.setFixedSize(600, 400)
+        self.setStyleSheet("background-color: #112233;")
+        self.setWindowFlags(Qt.Window | Qt.WindowTitleHint | Qt.WindowCloseButtonHint)
+
 
         self.layout = QGridLayout()
         self.setLayout(self.layout)
@@ -138,7 +145,10 @@ class ProfileManager(QWidget):
     def on_profile_clicked(self, name):
         self.selected_data["selected_user"] = name
         print("Selected user:", name)
+        
         self.save_profiles()
+        self.profile_selected.emit()
+        self.close()
 
     def on_profile_right_click(self, name):
        

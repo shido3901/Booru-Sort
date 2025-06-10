@@ -1,9 +1,12 @@
-from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QLabel, QTextEdit, 
-                             QPushButton, QHBoxLayout)
+from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QLabel, QTextEdit,  QGridLayout, QRadioButton, QWidget,
+                             QPushButton, QHBoxLayout, QSizePolicy)
 
 from PyQt5.QtGui import QFont, QTextCursor
-from PyQt5.QtCore import QObject, QEvent, Qt
-#from tag import TagManager
+from PyQt5.QtCore import QObject, QEvent, Qt, pyqtSignal
+from tag import TagManager
+from collections import OrderedDict
+from user_profiles import ProfileManager
+from view_elements import ImageManager
 
 import json
 
@@ -18,6 +21,7 @@ class TagWindow(QDialog):
         self.setStyleSheet("background-color: #171717;")
         self.setWindowTitle(" ")
         self.setGeometry(100, 300, 500, 400)
+        self.setWindowFlags(Qt.Window | Qt.CustomizeWindowHint)
 
         layout = QVBoxLayout()
         self.setLayout(layout)
@@ -35,6 +39,7 @@ class TagWindow(QDialog):
         """)
         self.text_box.setFont(QFont("Arial", 14))
         layout.addWidget(self.text_box)
+
    
         create_tag_button = QPushButton("create tag")
         create_tag_button.setStyleSheet("""
@@ -81,6 +86,8 @@ class TagWindow(QDialog):
 
 
 class TagListManager(QObject):
+    custom_signal = pyqtSignal(str)
+
     def __init__(self, tag_list_area, tag_list_area_layout, 
                  tag_list_recent_panel, tag_list_recent_panel_layout, parent=None):
         super().__init__()
@@ -88,21 +95,84 @@ class TagListManager(QObject):
         self.tag_list_area = tag_list_area
         self.tag_list_area_layout = tag_list_area_layout 
         self.parent = parent
-        self.tag_list = []
+        self.tag_list = {}
 
         self.add_tag_recent = RecentTags(tag_list_recent_panel, tag_list_recent_panel_layout, self)
+
+        #json area
+        self.list_data = "tag_list.json"
+        self.profile_manager = ProfileManager()
+
+        self.load_tag_startup()
+
+    def get_tag_list(self):
+        return self.tag_list
+
+    def load_tag_startup(self):
+        try:
+            with open(self.profile_manager.data_file, "r") as f:
+                user_data = json.load(f)
+                name = user_data.get("selected_user")
+                print(name, 'Maybe grabbed json"?')
+        except (FileNotFoundError, json.JSONDecodeError):
+            print("Could not read selected user.")
+            return
+
+        try:
+            with open(self.list_data, "r") as f:
+                all_user_data = json.load(f)
+        except (FileNotFoundError, json.JSONDecodeError):
+            all_user_data = {}
+        
+        if name in all_user_data:
+            self.tag_list = all_user_data[name].get("new tag list", {}).copy()
+            print("Loaded tag list:", self.tag_list)
+        else:
+            print(f"No data found for user: {name}")
+            self.tag_list = {}
+
+        self.refresh_list()
+    
+
 
     def create_tag_window(self):
        dialog = TagWindow(self)
        dialog.exec_()
 
     def add_tag_to_list(self, tag_name_list):
-        self.tag_list = tag_name_list + self.tag_list
-        print("new tag list:", self.tag_list)
+
+        try:
+            with open(self.profile_manager.data_file,"r") as f:
+                user_data = json.load(f)
+                self.name = user_data.get("selected_user")
+               
+
+                print(self.name, 'Maybe grabbed json"?')
+        except (FileNotFoundError, json.JSONDecodeError):
+            pass 
+
+        for tag in tag_name_list:
+            tag = tag.strip().lower()
+            if tag and tag not in self.tag_list:
+                self.tag_list[tag] = []
+
+        try:
+            with open(self.list_data, "r") as f:
+                all_user_data = json.load(f)
+        except (FileNotFoundError, json.JSONDecodeError):
+            all_user_data = {}
+                
+        all_user_data[self.name] = {
+            "new tag list": self.tag_list
+        }
+
+        with open(self.list_data, "w") as f:
+            json.dump(all_user_data, f, indent=2)
+
 
     def tag_load_images(self, tag_name):  #tag.py module
  
-        #self.tag_manager = TagManager(tag_name)
+        
 
         if tag_name in self.tag_list:
         
@@ -127,20 +197,96 @@ class TagListManager(QObject):
                 widget.deleteLater()
 
     def load_buttons(self):
+
  
-        for i, tag_name in enumerate(self.tag_list):
+        for tag_name in self.tag_list:
             tag_button = QPushButton(tag_name)
+            
+            tag_button.setFont(QFont("Arial"))
             tag_button.setStyleSheet("""
-                background-color: #333333;
-                color: white;
-                padding: 10px;
-                border-radius: 5px;
-            """)
-            tag_button.setFont(QFont("Arial", 10))
+                    QPushButton {
+                        color: white;
+                        background-color: #112233;
+                        font-size: 22px;
+                        text-align: left; 
+                        border: none;  
+                    }
+
+                    QPushButton:hover {
+                        color: #00FFFF; 
+                    }
+                """)
+
+
             tag_button.clicked.connect(lambda checked=False, name=tag_name: self.add_tag_recent.recent_tag_add(name))
+           
+            
             tag_button.installEventFilter(self)
 
-            self.tag_list_area_layout.addWidget(tag_button, i, 0, alignment=Qt.AlignTop)
+
+            #====import photo button=====
+
+            import_button = QPushButton(" +")
+            import_button.setStyleSheet("""
+                    QPushButton {
+                        color: white;
+                        background-color: #112233;
+                        font-size: 23px;
+                        text-align: left; 
+                        border: none;  
+                    }
+
+                    QPushButton:hover {
+                        color: #00FFFF; 
+                    }
+                """)
+            
+     
+            manager = TagManager(tag_name)
+            import_button.clicked.connect(lambda checked=False, mgr=manager: mgr.print_tag_name())
+            import_button.clicked.connect(lambda checked=False, name=tag_name: self.custom_signal.emit(name))
+
+
+
+            #==get entity count======
+
+            tag_count = len(self.tag_list[tag_name])
+            if tag_count >= 1000:
+                tag_count_display_num = f"{tag_count / 1000:.1f}k"
+            else:
+                tag_count_display_num = str(tag_count)
+
+            tag_count_display = QLabel(tag_count_display_num)
+            tag_count_display.setStyleSheet("""
+                color: white;
+                font-size: 22px;
+                background-color: #112233;
+                border: none                            
+            """)
+
+            #=== UI stuff==========
+
+            tag_button.setSizePolicy(QSizePolicy.Maximum,QSizePolicy.Fixed)
+            
+
+            row = QWidget()
+            row.setStyleSheet("background-color: #112233;")
+            row_layout = QHBoxLayout()
+            row_layout.setSpacing(1)
+            row_layout.setContentsMargins(0, 0, 0, 0)
+
+            row_layout.addWidget(tag_button, alignment=Qt.AlignLeft)
+  
+            row_layout.addStretch(1)
+            
+
+            row_layout.addWidget(tag_count_display)
+            row_layout.addWidget(import_button)
+
+            row.setLayout(row_layout)
+            self.tag_list_area_layout.addWidget(row)
+
+        self.tag_list_area_layout.addStretch()
 
 
     def eventFilter(self, obj, event):
@@ -151,8 +297,11 @@ class TagListManager(QObject):
                 return True  
         return False 
     
+    
     def handle_right_click(self, tag_name):
         self.show_delete_box(tag_name)
+
+
 
     def show_delete_box(self, tag_name):
         dialog = ConfirmDeleteDialog(tag_name)
@@ -164,14 +313,44 @@ class TagListManager(QObject):
         else:
             print("Cancelled.")
 
+
+
     def delete_tag(self, tag_name):
       
         if tag_name in self.tag_list:
             
-                self.tag_list.remove(tag_name)
+            del self.tag_list[tag_name]
 
-                print(self.tag_list)
-                self.refresh_list()
+            print(self.tag_list)
+
+            try:
+                with open(self.profile_manager.data_file,"r") as f:
+                    user_data = json.load(f)
+                    self.name = user_data.get("selected_user")
+                
+
+                    print(self.name, 'Maybe grabbed json"?')
+            except (FileNotFoundError, json.JSONDecodeError):
+                pass 
+
+
+            try:
+                with open(self.list_data, "r") as f:
+                    all_user_data = json.load(f)
+            except (FileNotFoundError, json.JSONDecodeError):
+                all_user_data = {}
+                    
+            all_user_data[self.name] = {
+                "new tag list": self.tag_list
+            }
+
+            with open(self.list_data, "w") as f:
+                json.dump(all_user_data, f, indent=2)
+
+            self.refresh_list()  
+
+
+        
 
 
 class RecentTags(QObject):
@@ -179,36 +358,108 @@ class RecentTags(QObject):
         super().__init__()
 
         self.tag_list_recent_panel = tag_list_recent_panel_layout
-        self.recent_tag_list = []
+        self.recent_tag_list = {}
 
         self.tag_list_manager = tag_list_manager
         
     
     def recent_tag_add(self, name):
-        self.tag_name = name
-        if self.tag_name in self.recent_tag_list:
+        if not hasattr(self, 'recent_tag_list') or not isinstance(self.recent_tag_list, OrderedDict):
+            self.recent_tag_list = OrderedDict()
 
-            self.recent_tag_list.remove(self.tag_name)
-        self.recent_tag_list.insert(0, self.tag_name)
+        if name in self.recent_tag_list:
+            del self.recent_tag_list[name]
+
+        self.recent_tag_list[name] = {} 
+        self.recent_tag_list.move_to_end(name, last=False)
+
+        print(self.recent_tag_list)
 
         self.refresh_recent_list()
+
+
         
      
     def load_recent_buttons(self):
 
-        for i, self.tag_name in enumerate(self.recent_tag_list):
+        for self.tag_name in self.recent_tag_list:
             recent_tag_button = QPushButton(self.tag_name)
+            recent_tag_button.setFont(QFont("Arial"))
+
             recent_tag_button.setStyleSheet("""
-                background-color: #333333;
-                color: white;
-                padding: 10px;
-                border-radius: 5px;
-            """)
-            recent_tag_button.setFont(QFont("Arial", 10))
+                    QPushButton {
+                        color: white;
+                        background-color: #112233;
+                        font-size: 22px;
+                        text-align: left; 
+                        border: none;  
+                    }
+
+                    QPushButton:hover {
+                        color: #00FFFF; 
+                    }
+                """)
+            
             recent_tag_button.clicked.connect(lambda checked=False, name=self.tag_name: self.recent_tag_add(name))
             recent_tag_button.installEventFilter(self)
+
+            import_button = QPushButton("+")
+            import_button.setStyleSheet("""
+                    QPushButton {
+                        color: white;
+                        background-color: transparent;
+                        font-size: 23px;
+                        text-align: left; 
+                        border: none;  
+                    }
+
+                    QPushButton:hover {
+                        color: #00FFFF; 
+                    }
+                """)
             
-            self.tag_list_recent_panel.addWidget(recent_tag_button, i, 0, alignment=Qt.AlignLeft)
+
+            #==get entity count======
+
+            tag_count = len(self.recent_tag_list[self.tag_name])
+            if tag_count >= 1000:
+                tag_count_display_num = f"{tag_count / 1000:.1f}k"
+            else:
+                tag_count_display_num = str(tag_count)
+
+            tag_count_display = QLabel(tag_count_display_num)
+            tag_count_display.setStyleSheet("""
+                color: white;
+                font-size: 22px;
+                background-color: transparent;
+            """)
+
+            #=== UI stuff==========
+
+            recent_tag_button.setSizePolicy(QSizePolicy.Maximum,QSizePolicy.Fixed)
+            
+
+            row = QWidget()
+            row_layout = QHBoxLayout()
+            row_layout.setSpacing(1)
+            row_layout.setContentsMargins(0, 0, 0, 0)
+
+            row_layout.addWidget(recent_tag_button, alignment=Qt.AlignLeft)
+  
+            row_layout.addStretch(1)
+            
+
+            row_layout.addWidget(tag_count_display)
+            row_layout.addWidget(import_button)
+
+            row.setLayout(row_layout)
+            self.tag_list_recent_panel.addWidget(row)
+        
+        self.tag_list_recent_panel.addStretch()
+
+
+
+        
 
 
     def clear_recent_tags(self):
@@ -230,7 +481,7 @@ class RecentTags(QObject):
       
         if tag_name in self.recent_tag_list:
             
-                self.recent_tag_list.remove(tag_name)
+                del self.recent_tag_list[tag_name]
 
                 print(self.recent_tag_list)
                 self.refresh_recent_list()
@@ -255,19 +506,16 @@ class RecentTags(QObject):
         result = dialog.exec_()
         if result == QDialog.Accepted:
             
-            
-            
             self.delete_recent_tag(tag_name)
 
             self.tag_list_manager.delete_tag(tag_name)
-
-
 
 
 class ConfirmDeleteDialog(QDialog):
     def __init__(self, tag_name, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Delete Tag?")
+        self.setWindowFlags(Qt.Window | Qt.CustomizeWindowHint)
         self.setStyleSheet("background-color: black; color: white;")
         self.setFixedSize(300, 200)  
 
@@ -298,7 +546,7 @@ class ConfirmDeleteDialog(QDialog):
             """)
             btn.setFixedWidth(80)
 
-        # Connect buttons
+      
         yes_button.clicked.connect(self.accept)
         no_button.clicked.connect(self.reject)
 

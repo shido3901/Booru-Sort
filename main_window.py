@@ -8,6 +8,7 @@ from view_elements import ImageManager
 from taglist import TagListManager, RecentTags
 from user_profiles import ProfileManager
 from tag import TagManager
+import json
 
 
 class MainWindow(QMainWindow):
@@ -306,8 +307,37 @@ class MainWindow(QMainWindow):
         self.user_profile.profile_selected.connect(self.tag_list_manager.load_tag_startup)
         self.tag_list_manager.custom_signal.connect(self.import_entities)
 
+        self.tag_list_manager.import_images.connect(self.get_file_path)
+      
+
+
+
 
         self.importing_files = True
+
+
+    def get_file_path(self, tag_name):
+        try:
+            with open(self.tag_list_manager.profile_manager.data_file, "r") as f:
+                profile = json.load(f)
+                username = profile.get("selected_user")
+                print(username, "Grabbed selected user from JSON.")
+        except (FileNotFoundError, json.JSONDecodeError):
+            print("Could not read selected user.")
+            return
+
+        user_tag_file = f"{username}.json"
+
+        try:
+            with open(user_tag_file, "r") as f:
+                user_tag_data = json.load(f)
+        except (FileNotFoundError, json.JSONDecodeError):
+            print(f"Could not read {user_tag_file}")
+            return
+
+        file_paths = user_tag_data.get(tag_name, {}).get("file paths", [])
+        print(f"Loaded file paths for '{tag_name}': {file_paths}")
+
 
     def import_entities(self, tag_name):
  
@@ -316,7 +346,11 @@ class MainWindow(QMainWindow):
             if widget is not None:
                 widget.deleteLater()
 
-        drop_box = DropBox(tag_name=tag_name, tag_list=self.tag_list_manager.get_tag_list())
+        drop_box = DropBox(
+            tag_name=tag_name,
+            tag_list=self.tag_list_manager.get_tag_list(),
+            tag_list_manager=self.tag_list_manager  
+        )
         drop_box.setMinimumSize(500, 500)
         drop_box.setStyleSheet("""
         background-color: white;
@@ -325,7 +359,7 @@ class MainWindow(QMainWindow):
 
         self.image_area_layout.addWidget(drop_box, 0, 0)
 
-        self.importing_files = False
+        #self.importing_files = False
 
         
     def resizeEvent(self, event):
@@ -337,13 +371,15 @@ class MainWindow(QMainWindow):
 
 
 class DropBox(QWidget):
-    def __init__(self, tag_name, tag_list, parent=None):
+    def __init__(self, tag_name, tag_list,  tag_list_manager, parent=None):
         super().__init__(parent)
         self.setFixedSize(200, 150)
         self.setAcceptDrops(True)
 
         self.tag_name = tag_name
-        self.tag_list = tag_list 
+        self.tag_list = tag_list
+        self.tag_list_manager = tag_list_manager
+
 
         self.setStyleSheet("""
             background-color: white;
@@ -365,23 +401,51 @@ class DropBox(QWidget):
             event.ignore()  
 
     def dropEvent(self, event: QDropEvent):
-        """Handle the drop event when files are dropped"""
+ 
         for url in event.mimeData().urls():
-            file_path = url.toLocalFile() 
+            file_path = url.toLocalFile()
 
             if file_path.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.mp4', '.webm')):
                 print(f"Dropped file: {file_path}")
-                self.label.setText(f"Loaded: {file_path.split('/')[-1]}") 
+                self.label.setText(f"Loaded: {file_path.split('/')[-1]}")
 
-                if self.tag_name not in self.tag_list:
-                    self.tag_list[self.tag_name] = []  
+                # ==== Load selected user ====
+                try:
+                    with open(self.tag_list_manager.profile_manager.data_file, "r") as f:  # or self.profile_manager.data_file
+                        profile = json.load(f)
+                        username = profile.get("selected_user")
+                except (FileNotFoundError, json.JSONDecodeError):
+                    print("Could not read selected user.")
+                    return
 
-          
-                self.tag_list[self.tag_name].append(file_path)
+                user_tag_file = f"{username}.json"
 
-                print(f"Files under '{self.tag_name}': {self.tag_list[self.tag_name]}")
+                # ==== Load user tag JSON ====
+                try:
+                    with open(user_tag_file, "r") as f:
+                        user_tag_data = json.load(f)
+                except (FileNotFoundError, json.JSONDecodeError):
+                    user_tag_data = {}
+
+                # ==== Add file to correct tag ====
+                if self.tag_name not in user_tag_data:
+                    user_tag_data[self.tag_name] = {"file paths": []}
+
+                if file_path not in user_tag_data[self.tag_name]["file paths"]:
+                    user_tag_data[self.tag_name]["file paths"].append(file_path)
+
+                # ==== Save back to JSON ====
+                with open(user_tag_file, "w") as f:
+                    json.dump(user_tag_data, f, indent=2)
+
+                print(f"Files under '{self.tag_name}': {user_tag_data[self.tag_name]['file paths']}")
+                self.hide()
+
             else:
                 print("Unsupported file type")
+
+
+    
 
 
 

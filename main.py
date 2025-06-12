@@ -1,19 +1,26 @@
 import sys
-from PyQt5.QtWidgets import (QMainWindow, QApplication, QLabel, QWidget, QLineEdit, QSizePolicy,
+import os
+from PyQt5.QtWidgets import (QMainWindow, QApplication, QLabel, QWidget, QLineEdit, QSizePolicy, QScrollArea,
                              QVBoxLayout, QHBoxLayout, QGridLayout, QPushButton)
 from PyQt5.QtCore import Qt
+from profiles import ProfileManager
 
 
-debug_mode = 0
+debug_mode = 1
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Booru Sort Lite")
-        self.setGeometry(0, 0, 1920, 1080)
+        self.setGeometry(200, 200, 1920, 1080)
         self.setStyleSheet("background-color: #010c1c;")
 
         self.initUI()
+
+    def open_profile(self):
+        if self.profiles is None:
+            self.profiles = ProfileManager()
+        self.profiles.show()
 
     def initUI(self):
         main_window = QWidget()
@@ -24,12 +31,15 @@ class MainWindow(QMainWindow):
             self.left_panel_ui = "color: black; background-color: white; border: 2px dashed red;"
             self.widgets = "color: black; background-color: yellow; border: 2px dashed red;"
             self.widgets_next = "color: black; background-color: green; border: 2px dashed red;"
-            
+            self.buttons = "QPushButton { color: white; background-color: #112233; border: none; font-size: 25px; } QPushButton:hover { color: #00FFFF; }"
+
         else:
             self.ui = "color: white; background-color: #112233; border: 2px solid #1f618d; border-radius: 10px;"
             self.left_panel_ui = "color: white; background-color;"
             self.widgets = "color: white; background-color: #112233; border: 2px solid #1f618d; border-radius: 10px;"
             self.widgets_next = "color: white; background-color: #010c1c; border: 2px solid #1f618d; border-radius: 10px;"
+            self.buttons = "QPushButton { color: white; background-color: #112233; border: none; font-size: 25px; } QPushButton:hover { color: #00FFFF; }"
+
 
 #============LEFT PANEL=====================================================================================================================
 
@@ -60,19 +70,16 @@ class MainWindow(QMainWindow):
 
         profile_select_button = QPushButton("profile :",  self.profile_panel)
         profile_select_button.setCursor(Qt.PointingHandCursor)
-        profile_select_button.setStyleSheet("""
-            QPushButton {
-                color: white;
-                background-color: #112233;
-                border: none;
-                font-size: 25px;
-            }
-
-            QPushButton:hover {
-                color: #00FFFF;  
-            }
-        """)       
+        profile_select_button.setStyleSheet(self.buttons)       
         profile_panel_layout.addWidget(profile_select_button, alignment=Qt.AlignLeft)
+
+        self.profiles = None
+
+        profile_select_button.clicked.connect(self.open_profile)
+
+    
+
+
     
         #======= add tag and hide new tag list =====================================
         self.add_tag_panel = QWidget(self.left_panel)
@@ -92,18 +99,7 @@ class MainWindow(QMainWindow):
         hide_new_tags = QPushButton("◯", self.add_tag_panel)
         hide_new_tags.setCursor(Qt.PointingHandCursor)
         hide_new_tags.setMinimumHeight(30)
-        hide_new_tags.setStyleSheet("""
-            QPushButton {
-                color: white;
-                background-color: #112233;
-                border: none;
-                font-size: 25px;
-            }
-
-            QPushButton:hover {
-                color: #00FFFF;  
-            }
-        """)
+        hide_new_tags.setStyleSheet(self.buttons)
         self.add_tag_panel_layout.addWidget(hide_new_tags, alignment=Qt.AlignLeft)
 
         self.list_hidden = False
@@ -116,25 +112,97 @@ class MainWindow(QMainWindow):
         add_tag_button = QPushButton("add +", self.add_tag_panel)
         add_tag_button.setCursor(Qt.PointingHandCursor)
         add_tag_button.setMinimumHeight(30)
-        add_tag_button.setStyleSheet("""
-            QPushButton {
-                color: white;
-                background-color: #112233;
-                border: none;
-                font-size: 25px;
-            }
-
-            QPushButton:hover {
-                color: #00FFFF;  
-            }
-        """)
+        add_tag_button.setStyleSheet(self.buttons)
         self.add_tag_panel_layout.addWidget(add_tag_button, alignment=Qt.AlignRight)
         
         self.tag_list = QWidget(self.left_panel)
         self.tag_list.setMinimumWidth(250)
         self.tag_list.setMinimumHeight(200)
         self.tag_list.setStyleSheet(self.widgets)
+
+        self.tag_list_layout = QVBoxLayout()
+        self.tag_list.setLayout(self.tag_list_layout)
+
+        new_tag_scroll_area = QScrollArea()
+        new_tag_scroll_area.setWidgetResizable(True)
+
+        scroll_content = QWidget()
+        scroll_layout = QVBoxLayout()
+        scroll_content.setLayout(scroll_layout)
+        
+
+        for i in range (50):
+            
+            test_button = QPushButton(f'test {i + 1}')
+            scroll_layout.addWidget(test_button)
+
+        new_tag_scroll_area.setWidget(scroll_content)
+        new_tag_scroll_area.setStyleSheet("""
+            QScrollArea {
+                border: none;
+                background-color: #1e1e1e;
+            }
+
+            QScrollBar:vertical {
+                background: #2c2c2c;
+                width: 10px;
+                margin: 2px 0 2px 0;
+                border-radius: 5px;
+            }
+
+            QScrollBar::handle:vertical {
+                background: #555;
+                min-height: 20px;
+                border-radius: 5px;
+            }
+
+            QScrollBar::handle:vertical:hover {
+                background: #888;
+            }
+
+            QScrollBar::add-line:vertical,
+            QScrollBar::sub-line:vertical {
+                height: 0;
+                background: none;
+                border: none;
+            }
+
+            QScrollBar::add-page:vertical,
+            QScrollBar::sub-page:vertical {
+                background: none;
+            }
+
+            QScrollBar:horizontal {
+                height: 8px;
+                background: #2c2c2c;
+            }
+
+            QScrollBar::handle:horizontal {
+                background: #555;
+                border-radius: 4px;
+            }
+
+            QScrollBar::handle:horizontal:hover {
+                background: #888;
+            }
+
+            QScrollBar::add-line:horizontal,
+            QScrollBar::sub-line:horizontal {
+                width: 0;
+                background: none;
+                border: none;
+            }
+
+            QScrollBar::add-page:horizontal,
+            QScrollBar::sub-page:horizontal {
+                background: none;
+            }
+        """)
+
+     
+        self.tag_list_layout.addWidget(new_tag_scroll_area)
         self.left_panel_layout.addWidget(self.tag_list, stretch=7)
+
 
         #==========recent tags panel ==================
 
@@ -151,12 +219,91 @@ class MainWindow(QMainWindow):
         recent_tag_label.setStyleSheet("color: white; font-size: 24px; font-weight: bold;")
         self.recent_tag_panel_layout.addWidget(recent_tag_label, alignment=Qt.AlignLeft)
 
-    
-        
         self.recent_list = QWidget(self.left_panel)
         self.recent_list.setMinimumWidth(250)
         self.recent_list.setMinimumHeight(30)
         self.recent_list.setStyleSheet(self.widgets)
+
+        self.recent_list_layout = QVBoxLayout()
+        self.recent_list.setLayout(self.recent_list_layout)
+
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setStyleSheet("border: none;") 
+
+        scroll_content = QWidget()
+        scroll_layout = QVBoxLayout()
+        scroll_content.setLayout(scroll_layout)
+
+        for i in range(100):
+            button = QPushButton(f"nigga {i + 1}")
+            scroll_layout.addWidget(button)
+
+        scroll_area.setWidget(scroll_content)
+        scroll_area.setStyleSheet("""
+            QScrollArea {
+                border: none;
+                background-color: #1e1e1e;
+            }
+
+            QScrollBar:vertical {
+                background: #2c2c2c;
+                width: 10px;
+                margin: 2px 0 2px 0;
+                border-radius: 5px;
+            }
+
+            QScrollBar::handle:vertical {
+                background: #555;
+                min-height: 20px;
+                border-radius: 5px;
+            }
+
+            QScrollBar::handle:vertical:hover {
+                background: #888;
+            }
+
+            QScrollBar::add-line:vertical,
+            QScrollBar::sub-line:vertical {
+                height: 0;
+                background: none;
+                border: none;
+            }
+
+            QScrollBar::add-page:vertical,
+            QScrollBar::sub-page:vertical {
+                background: none;
+            }
+
+            QScrollBar:horizontal {
+                height: 8px;
+                background: #2c2c2c;
+            }
+
+            QScrollBar::handle:horizontal {
+                background: #555;
+                border-radius: 4px;
+            }
+
+            QScrollBar::handle:horizontal:hover {
+                background: #888;
+            }
+
+            QScrollBar::add-line:horizontal,
+            QScrollBar::sub-line:horizontal {
+                width: 0;
+                background: none;
+                border: none;
+            }
+
+            QScrollBar::add-page:horizontal,
+            QScrollBar::sub-page:horizontal {
+                background: none;
+            }
+        """)
+
+      
+        self.recent_list_layout.addWidget(scroll_area)
         self.left_panel_layout.addWidget(self.recent_list, stretch=13)
 
       
@@ -174,8 +321,7 @@ class MainWindow(QMainWindow):
 
         self.top_bar_layout = QHBoxLayout(self.top_bar)
         self.top_bar_layout.setContentsMargins(0, 0, 0, 0)
-        self.top_bar_layout.setSpacing(5)
-
+        self.top_bar_layout.setSpacing(0)
 
         self.search_bar_widget = QWidget(self.top_bar)
         self.search_bar_widget.setMinimumWidth(300)
@@ -183,31 +329,19 @@ class MainWindow(QMainWindow):
         self.top_bar_layout.addWidget(self.search_bar_widget)
 
         self.search_bar_widget_layout = QHBoxLayout(self.search_bar_widget)
-        self.search_bar_widget_layout.setContentsMargins(10,5,5,10)
-        self.search_bar_widget_layout.setSpacing(10)
-
+        self.search_bar_widget_layout.setContentsMargins(10,1,1,10)
+        self.search_bar_widget_layout.setSpacing(7)
 
         self.save_search = QPushButton("save search", self.search_bar_widget)
         self.save_search.setCursor(Qt.PointingHandCursor)
         self.save_search.setMinimumHeight(30)
         self.save_search.setMaximumWidth(170)
-        self.save_search.setStyleSheet("""
-            QPushButton {
-                color: white;
-                background-color: #112233;
-                border: none;
-                font-size: 25px;
-            }
-
-            QPushButton:hover {
-                color: #00FFFF;  
-            }
-        """)
+        self.save_search.setStyleSheet(self.buttons)
         self.search_bar_widget_layout.addWidget(self.save_search)
-
 
         text_box = QLineEdit(self.search_bar_widget)
         text_box.setPlaceholderText("Search Example: black_cat")
+        text_box.setMinimumHeight(30)
         text_box.setMinimumWidth(700)
         text_box.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
     
@@ -228,25 +362,9 @@ class MainWindow(QMainWindow):
         self.set_size.setMinimumHeight(30)
         self.set_size.setMinimumWidth(70)
         self.set_size.setMaximumWidth(170)
-        self.set_size.setStyleSheet("""
-            QPushButton {
-                color: white;
-                background-color: #112233;
-                border: none;
-                font-size: 25px;
-            }
-
-            QPushButton:hover {
-                color: #00FFFF;  
-            }
-        """)
+        self.set_size.setStyleSheet(self.buttons)
         self.search_bar_widget_layout.addWidget(self.set_size)
 
-
-
-
-
-      
         self.main_area = QWidget(main_window)
         self.main_area.setMinimumWidth(300)
         self.main_area.setMinimumHeight(600)
@@ -286,89 +404,29 @@ class MainWindow(QMainWindow):
         self.page_count_area_layout.setContentsMargins(0, 0, 0, 0)
         self.page_count_area_layout.setSpacing(25) 
 
-
         self.first_page = QPushButton("<<", self.page_count_area)
-        self.first_page.setStyleSheet("""
-            QPushButton {
-                color: white;
-                background-color: #112233;
-                border: none;
-                font-size: 25px;
-            }
-
-            QPushButton:hover {
-                color: #00FFFF;  
-            }
-        """)       
+        self.first_page.setStyleSheet(self.buttons)       
         self.page_count_area_layout.addWidget(self.first_page, alignment=Qt.AlignLeft)
 
-
         self.previous_page =  QPushButton("<", self.page_count_area)
-        self.previous_page.setStyleSheet("""
-            QPushButton {
-                color: white;
-                background-color: #112233;
-                border: none;
-                font-size: 25px;
-            }
-
-            QPushButton:hover {
-                color: #00FFFF;  
-            }
-        """)       
+        self.previous_page.setStyleSheet(self.buttons)       
         self.previous_page.setCursor(Qt.PointingHandCursor)
         self.page_count_area_layout.addWidget(self.previous_page, alignment=Qt.AlignLeft)
 
         self.page_count =  QLabel("Page 3 of 14, 377 items", self.page_count_area)
-        self.page_count.setStyleSheet("""
-            QPushButton {
-                color: white;
-                background-color: #112233;
-                border: none;
-                font-size: 25px;
-            }
-
-            QPushButton:hover {
-                color: #00FFFF;  
-            }
-        """)       
+        self.page_count.setStyleSheet(self.buttons)       
         self.page_count.setMinimumWidth(100)
         self.page_count_area_layout.addWidget(self.page_count, alignment=Qt.AlignCenter)
 
         self.next_page =  QPushButton(">", self.page_count_area)
-        self.next_page.setStyleSheet("""
-            QPushButton {
-                color: white;
-                background-color: #112233;
-                border: none;
-                font-size: 25px;
-            }
-
-            QPushButton:hover {
-                color: #00FFFF;  
-            }
-        """)       
+        self.next_page.setStyleSheet(self.buttons)       
         self.next_page.setCursor(Qt.PointingHandCursor)
         self.page_count_area_layout.addWidget(self.next_page, alignment=Qt.AlignRight)
 
         self.last_page =  QPushButton(">>", self.page_count_area)
-        self.last_page.setStyleSheet("""
-            QPushButton {
-                color: white;
-                background-color: #112233;
-                border: none;
-                font-size: 25px;
-            }
-
-            QPushButton:hover {
-                color: #00FFFF;  
-            }
-        """)       
+        self.last_page.setStyleSheet(self.buttons)       
         self.last_page.setCursor(Qt.PointingHandCursor)
         self.page_count_area_layout.addWidget(self.last_page, alignment=Qt.AlignRight)
-
-
-
 
         grid_layout.setRowStretch(0, 1)
         grid_layout.setRowStretch(1, 20)
@@ -381,12 +439,6 @@ class MainWindow(QMainWindow):
         
     
         
-
-
-
-
-
-
 
 
 def main():

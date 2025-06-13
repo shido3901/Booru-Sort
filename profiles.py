@@ -1,12 +1,13 @@
 from PyQt5.QtWidgets import (
     QWidget, QPushButton, QVBoxLayout, QHBoxLayout, QGridLayout, QDialog,
-    QLabel, QLineEdit, QApplication, 
+    QLabel, QLineEdit, QApplication
 )
 from PyQt5.QtGui import QFont, QIcon
-from PyQt5.QtCore import Qt, QSize
-import sys
+from PyQt5.QtCore import Qt, QSize, pyqtSignal
 import json
 import os
+import shutil
+import sys
 
 
 class DeleteProfileDialog(QDialog):
@@ -30,22 +31,29 @@ class DeleteProfileDialog(QDialog):
 
         self.setLayout(layout)
 
-class ProfileManager(QWidget): 
-    def __init__(self):
-        super().__init__()
+class ProfileManager(QDialog):
+    closed = pyqtSignal()
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
 
         self.setWindowTitle("users")
         self.setFixedSize(800, 600)
         self.setStyleSheet("background-color: #112233;")
         self.setWindowFlags(Qt.Window | Qt.WindowTitleHint | Qt.WindowCloseButtonHint)
+        self.show()
 
         self.layout = QGridLayout()
         self.setLayout(self.layout)
+
+        self.profiles_json = "profiles.json"
 
         self.profile_count = 0
 
         self.selected_data = {} 
         self.profile_buttons = []
+        self.selected_user = None
+        
 
         self.create_profile = False
         self.no_profile = True
@@ -60,9 +68,12 @@ class ProfileManager(QWidget):
     
     def load_profile_buttons(self):
 
-        self.profile_count = len(self.profile_buttons)
-        print(self.profile_count)
+        with open('profiles.json', 'r') as f:
+            profiles_names_data = json.load(f)
 
+        self.profile_buttons = profiles_names_data["profiles"]
+        self.profile_count = len(self.profile_buttons)
+       
         self.row = 0
         self.col_cnt = 0
         i = 0
@@ -79,7 +90,7 @@ class ProfileManager(QWidget):
             self.add_profile_widget_layout.setSpacing(0)
             self.add_profile_widget_layout.setContentsMargins(0, 0, 0, 0)
 
-            profile_button = QPushButton(QIcon(r"C:\Users\Jon\Desktop\Coding\Booru Sort Lite\2bda51ca60cc3b5daaa8e062eb880430.jpg"), "")
+            profile_button = QPushButton(QIcon(r"C:\Users\Jon\Desktop\New folder\2bda51ca60cc3b5daaa8e062eb880430.jpg"), "")
             profile_button.setIconSize(QSize(150,150))
             profile_button.setFixedSize(150,150)
 
@@ -88,7 +99,7 @@ class ProfileManager(QWidget):
             self.profile_label.setText(name)
             self.profile_label.setAlignment(Qt.AlignCenter)
 
-            self.profile_label.setStyleSheet("color: white;" "border: none;")
+            self.profile_label.setStyleSheet("color: white;" "border: none;" "font-size: 18px;")
             self.profile_label.setFixedSize(150, 50)
 
             profile_button.clicked.connect(lambda checked, n=name: self.load_profile(n))
@@ -104,7 +115,7 @@ class ProfileManager(QWidget):
 
 
         if self.profile_count == 0 and self.no_profile == True or i == self.profile_count - 1 and self.create_profile == False:
-                print(self.create_profile)
+              
 
                 if self.profile_count == 0:
                     last_row = 0
@@ -124,12 +135,13 @@ class ProfileManager(QWidget):
 
                 add_profile_button = QPushButton("+")
                 add_profile_button.setFixedSize(150,150)
-                add_profile_button.setStyleSheet("QPushButton { font-size: 36px; background-color: #444; color: white; border: 2px solid #888; border-radius: 8px; } QPushButton:hover { background-color: #666; }")
+                add_profile_button.setStyleSheet("QPushButton { font-size: 40px; background-color: #444; color: white; border: 2px solid #888; border-radius: 8px; } QPushButton:hover { background-color: #666; }")
 
                 self.add_label = QLabel("add profile")
                 self.add_label.setAlignment(Qt.AlignCenter)
                 self.add_label.setStyleSheet("color: white;"
-                                            "border: none;")
+                                            "border: none;"
+                                            "font-size: 18px;")
                 self.add_label.setFixedSize(150, 50)        
                 
                 self.add_profile_button_widget_layout.addWidget(add_profile_button, alignment=Qt.AlignTop)
@@ -151,19 +163,22 @@ class ProfileManager(QWidget):
                 self.add_profile_name_layout.setSpacing(0)
                 self.add_profile_name_layout.setContentsMargins(0, 0, 0, 0)
 
-                profile_button = QPushButton(QIcon(r"C:\Users\Jon\Desktop\Coding\Booru Sort Lite\2bda51ca60cc3b5daaa8e062eb880430.jpg"), "")
+                profile_button = QPushButton(QIcon(r"C:\Users\Jon\Desktop\New folder\2bda51ca60cc3b5daaa8e062eb880430.jpg"), "")
                 profile_button.setIconSize(QSize(150,150))
                 profile_button.setFixedSize(150,150)
 
                 self.input_box = QLineEdit()
                 self.input_box.setPlaceholderText("profile name eg., miku")
-                self.input_box.setStyleSheet("color: white;"
-                                        "border: none;")
+                font = QFont()
+                font.setPointSize(12)
+                self.input_box.setFont(font)
+                
                 self.input_box.setFixedSize(150, 50)
                 self.input_box.returnPressed.connect(lambda: self.profile_input(self.input_box))
 
                 self.input_box.setStyleSheet("color: white;" "border: none;")
                 self.input_box.setFixedSize(150, 50)
+                self.input_box.setFocus()
 
                 self.add_profile_name_layout.addWidget(profile_button, alignment=Qt.AlignTop)
                 self.add_profile_name_layout.addWidget(self.input_box, alignment=Qt.AlignBottom)
@@ -173,16 +188,27 @@ class ProfileManager(QWidget):
     def on_profile_right_click(self, name):
         delete_dialog = DeleteProfileDialog(name)
         if delete_dialog.exec_() == QDialog.Accepted:
-            print('ok')
+            
             self.profile_buttons.remove(name)
-            print(self.profile_buttons)
 
+            profile_name = name
             self.no_profile = True
+
+            profile_data = {
+                "profiles": self.profile_buttons,
+                "selected user": self.selected_user
+            }
+
+            with open('profiles.json', 'w') as f:
+                json.dump(profile_data, f, indent=4)
+
+            try:
+                shutil.rmtree(f"profiles/{profile_name}")
+            except FileNotFoundError:
+                 print('No folder font for user')
 
             self.refresh_profiles()
             
-                
-
     def create_new_profile(self):
        
         if len(self.profile_buttons) == 0:
@@ -198,9 +224,32 @@ class ProfileManager(QWidget):
         profile_name = self.input_box.text()
         self.profile_buttons.append(profile_name)
 
+        #directory_name =profile_name
+
+        try:
+            os.mkdir("profiles")
+        except FileExistsError:
+            print('File already exists')
+
+        nested_directory = f"profiles/{profile_name}"
+
+        try:
+            os.makedirs(nested_directory)
+        except FileExistsError:
+            print('Directory already exists')
+
         self.create_profile = False
+
+        profile_data = {
+                "profiles": self.profile_buttons,
+                "selected user": self.selected_user
+            }
+
+        with open('profiles.json', 'w') as f:
+                json.dump(profile_data, f, indent=4)
         
         self.refresh_profiles()
+
 
     def refresh_profiles(self):
          
@@ -213,8 +262,25 @@ class ProfileManager(QWidget):
         self.load_profile_buttons()
 
     def load_profile(self, name):
+
+        self.selected_user = name
+
+        profile_data = {
+                "profiles": self.profile_buttons,
+                "selected user": self.selected_user
+            }
+
+        with open('profiles.json', 'w') as f:
+                json.dump(profile_data, f, indent=4)
+
         print(name)
+        self.refresh_profiles()
+
         self.close()
+
+    def closeEvent(self, event):
+        self.closed.emit()
+        super().closeEvent(event)
 
 
     

@@ -2,9 +2,9 @@ import sys
 import os
 from PyQt5.QtWidgets import (QMainWindow, QApplication, QLabel, QWidget, QLineEdit, QSizePolicy, QScrollArea,
                              QVBoxLayout, QHBoxLayout, QGridLayout, QPushButton)
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QTimer
 from profiles import ProfileManager
-
+import json
 
 debug_mode = 1
 
@@ -12,19 +12,14 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Booru Sort Lite")
-        self.setGeometry(200, 200, 1920, 1080)
+        self.setGeometry(0, 0, 1920, 1080)
         self.setStyleSheet("background-color: #010c1c;")
-
+     
         self.initUI()
-
-    def open_profile(self):
-        if self.profiles is None:
-            self.profiles = ProfileManager()
-        self.profiles.show()
-
+    
     def initUI(self):
-        main_window = QWidget()
-        self.setCentralWidget(main_window)
+        self.main_window = QWidget()
+        self.setCentralWidget(self.main_window)
 
         if debug_mode == 0:
             self.ui = "color: black; background-color: white; border: 2px dashed red;"
@@ -41,12 +36,14 @@ class MainWindow(QMainWindow):
             self.buttons = "QPushButton { color: white; background-color: #112233; border: none; font-size: 25px; } QPushButton:hover { color: #00FFFF; }"
 
 
+        
+
 #============LEFT PANEL=====================================================================================================================
 
-        grid_layout = QGridLayout(main_window)
-        main_window.setLayout(grid_layout)
+        grid_layout = QGridLayout(self.main_window)
+        self.main_window.setLayout(grid_layout)
 
-        self.left_panel = QWidget(main_window)
+        self.left_panel = QWidget(self.main_window)
         self.left_panel.setMinimumWidth(300)
         self.left_panel.setMaximumWidth(475)
         self.left_panel.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
@@ -68,12 +65,17 @@ class MainWindow(QMainWindow):
 
         profile_panel_layout = QVBoxLayout(self.profile_panel)
 
-        profile_select_button = QPushButton("profile :",  self.profile_panel)
+        with open('profiles.json', 'r') as f:
+            profiles_names_data = json.load(f)
+
+        self.selected_user = profiles_names_data["selected user"]
+
+        profile_select_button = QPushButton(f"profile",  self.profile_panel)
         profile_select_button.setCursor(Qt.PointingHandCursor)
         profile_select_button.setStyleSheet(self.buttons)       
         profile_panel_layout.addWidget(profile_select_button, alignment=Qt.AlignLeft)
 
-        self.profiles = None
+
 
         profile_select_button.clicked.connect(self.open_profile)
 
@@ -236,7 +238,7 @@ class MainWindow(QMainWindow):
         scroll_content.setLayout(scroll_layout)
 
         for i in range(100):
-            button = QPushButton(f"nigga {i + 1}")
+            button = QPushButton(f"tag {i + 1}")
             scroll_layout.addWidget(button)
 
         scroll_area.setWidget(scroll_content)
@@ -311,7 +313,7 @@ class MainWindow(QMainWindow):
 #============TOP PANEL====================================================================================================================
 
         #======== search bar =========
-        self.top_bar = QWidget(main_window)
+        self.top_bar = QWidget(self.main_window)
         self.top_bar.setMinimumWidth(600)
         self.top_bar.setMinimumHeight(30)
         self.top_bar.setMaximumHeight(70)
@@ -365,7 +367,7 @@ class MainWindow(QMainWindow):
         self.set_size.setStyleSheet(self.buttons)
         self.search_bar_widget_layout.addWidget(self.set_size)
 
-        self.main_area = QWidget(main_window)
+        self.main_area = QWidget(self.main_window)
         self.main_area.setMinimumWidth(300)
         self.main_area.setMinimumHeight(600)
         self.main_area.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
@@ -374,7 +376,7 @@ class MainWindow(QMainWindow):
      
 #============== bottom bar ====================
 
-        self.bottom_bar = QWidget(main_window)
+        self.bottom_bar = QWidget(self.main_window)
         self.bottom_bar.setMinimumHeight(30)
         self.bottom_bar.setMaximumHeight(50)
         self.bottom_bar.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
@@ -434,7 +436,43 @@ class MainWindow(QMainWindow):
 
         grid_layout.setColumnStretch(0, 1)
         grid_layout.setColumnStretch(1, 3)
-       
+
+        self.close()
+
+        with open('profiles.json', 'r') as f:
+            profiles_names_data = json.load(f)
+
+        self.selected_user = profiles_names_data["selected user"]
+
+        if self.selected_user == None:
+            self.profiles = ProfileManager(self)
+            
+            QTimer.singleShot(0, lambda: self.profiles.raise_())
+
+            self.profiles.closed.connect(self.on_profile_closed)
+               
+    def open_profile(self):
+            self.profiles = ProfileManager(self)
+            
+    def on_profile_closed(self):
+
+
+        with open('profiles.json', 'r') as f:
+            profiles_names_data = json.load(f)
+
+        self.selected_user = profiles_names_data["selected user"]
+        print(self.selected_user)
+
+        if self.selected_user == None:
+            self.close()
+  
+        
+        
+        
+    
+    
+    
+              
         
         
     

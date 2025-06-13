@@ -1,0 +1,8 @@
+{
+    "profiles": [
+        "anime",
+        "travel",
+        "cars"
+    ],
+    "selected user": "anime"
+}

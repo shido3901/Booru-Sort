@@ -2,11 +2,13 @@ import sys
 import os
 from PyQt5.QtWidgets import (QMainWindow, QApplication, QLabel, QWidget, QLineEdit, QSizePolicy, QScrollArea,
                              QVBoxLayout, QHBoxLayout, QGridLayout, QPushButton)
-from PyQt5.QtCore import Qt, QTimer
+from PyQt5.QtCore import Qt, QTimer, QPoint
 from profiles import ProfileManager
-import json
+from taglist import TagList, TagWindow
+from PyQt5.QtGui import QCursor
+from theme import Theme
 
-debug_mode = 1
+import json
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -14,6 +16,8 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Booru Sort Lite")
         self.setGeometry(0, 0, 1920, 1080)
         self.setStyleSheet("background-color: #010c1c;")
+
+        self.theme = Theme(theme=1)
      
         self.initUI()
     
@@ -21,22 +25,6 @@ class MainWindow(QMainWindow):
         self.main_window = QWidget()
         self.setCentralWidget(self.main_window)
 
-        if debug_mode == 0:
-            self.ui = "color: black; background-color: white; border: 2px dashed red;"
-            self.left_panel_ui = "color: black; background-color: white; border: 2px dashed red;"
-            self.widgets = "color: black; background-color: yellow; border: 2px dashed red;"
-            self.widgets_next = "color: black; background-color: green; border: 2px dashed red;"
-            self.buttons = "QPushButton { color: white; background-color: #112233; border: none; font-size: 25px; } QPushButton:hover { color: #00FFFF; }"
-
-        else:
-            self.ui = "color: white; background-color: #112233; border: 2px solid #1f618d; border-radius: 10px;"
-            self.left_panel_ui = "color: white; background-color;"
-            self.widgets = "color: white; background-color: #112233; border: 2px solid #1f618d; border-radius: 10px;"
-            self.widgets_next = "color: white; background-color: #010c1c; border: 2px solid #1f618d; border-radius: 10px;"
-            self.buttons = "QPushButton { color: white; background-color: #112233; border: none; font-size: 25px; } QPushButton:hover { color: #00FFFF; }"
-
-
-        
 
 #============LEFT PANEL=====================================================================================================================
 
@@ -47,7 +35,7 @@ class MainWindow(QMainWindow):
         self.left_panel.setMinimumWidth(300)
         self.left_panel.setMaximumWidth(475)
         self.left_panel.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.left_panel.setStyleSheet(self.left_panel_ui)
+        self.left_panel.setStyleSheet(self.theme.left_panel_ui)
         grid_layout.addWidget(self.left_panel, 0, 0, 3, 1)
 
         self.left_panel_layout = QVBoxLayout(self.left_panel)
@@ -60,19 +48,22 @@ class MainWindow(QMainWindow):
         self.profile_panel.setMinimumWidth(250)
         self.profile_panel.setMinimumHeight(70)
         self.profile_panel.setMaximumHeight(70)
-        self.profile_panel.setStyleSheet(self.widgets)
+        self.profile_panel.setStyleSheet(self.theme.widgets)
         self.left_panel_layout.addWidget(self.profile_panel)
 
         profile_panel_layout = QVBoxLayout(self.profile_panel)
+        try:
 
-        with open('profiles.json', 'r') as f:
-            profiles_names_data = json.load(f)
+            with open('profiles.json', 'r') as f:
+                profiles_names_data = json.load(f)
+        except FileNotFoundError:
+            print('asd')
 
         self.selected_user = profiles_names_data["selected user"]
 
         profile_select_button = QPushButton(f"profile",  self.profile_panel)
         profile_select_button.setCursor(Qt.PointingHandCursor)
-        profile_select_button.setStyleSheet(self.buttons)       
+        profile_select_button.setStyleSheet(self.theme.buttons)       
         profile_panel_layout.addWidget(profile_select_button, alignment=Qt.AlignLeft)
 
 
@@ -88,7 +79,7 @@ class MainWindow(QMainWindow):
         self.add_tag_panel.setMinimumWidth(250)
         self.add_tag_panel.setMinimumHeight(50)
         self.add_tag_panel.setMaximumHeight(70)
-        self.add_tag_panel.setStyleSheet(self.widgets_next)
+        self.add_tag_panel.setStyleSheet(self.theme.widgets_next)
         self.left_panel_layout.addWidget(self.add_tag_panel, stretch=1)
 
         self.add_tag_panel_layout = QHBoxLayout(self.add_tag_panel)
@@ -101,7 +92,7 @@ class MainWindow(QMainWindow):
         hide_new_tags = QPushButton("◯", self.add_tag_panel)
         hide_new_tags.setCursor(Qt.PointingHandCursor)
         hide_new_tags.setMinimumHeight(30)
-        hide_new_tags.setStyleSheet(self.buttons)
+        hide_new_tags.setStyleSheet(self.theme.buttons)
         self.add_tag_panel_layout.addWidget(hide_new_tags, alignment=Qt.AlignLeft)
 
         self.list_hidden = False
@@ -114,15 +105,22 @@ class MainWindow(QMainWindow):
         add_tag_button = QPushButton("add +", self.add_tag_panel)
         add_tag_button.setCursor(Qt.PointingHandCursor)
         add_tag_button.setMinimumHeight(30)
-        add_tag_button.setStyleSheet(self.buttons)
+        add_tag_button.setStyleSheet(self.theme.buttons)
         self.add_tag_panel_layout.addWidget(add_tag_button, alignment=Qt.AlignRight)
+
+       
+        add_tag_button.clicked.connect(self.open_tag_window)
+
+   
         
         self.tag_list = QWidget(self.left_panel)
         self.tag_list.setMinimumWidth(250)
         self.tag_list.setMinimumHeight(200)
-        self.tag_list.setStyleSheet(self.widgets)
+        self.tag_list.setStyleSheet(self.theme.widgets)
 
         self.tag_list_layout = QVBoxLayout()
+        self.tag_list_layout.setSpacing(0)
+        self.tag_list_layout.setContentsMargins(0,0,0,0)
         self.tag_list.setLayout(self.tag_list_layout)
 
         new_tag_scroll_area = QScrollArea()
@@ -130,14 +128,12 @@ class MainWindow(QMainWindow):
 
         scroll_content = QWidget()
         scroll_layout = QVBoxLayout()
+        scroll_layout.setContentsMargins(0,0,0,0)
+        scroll_layout.setSpacing(2)
+        scroll_layout.addStretch()
         scroll_content.setLayout(scroll_layout)
         
-
-        for i in range (50):
-            
-            test_button = QPushButton(f'test {i + 1}')
-            scroll_layout.addWidget(test_button)
-
+     
         new_tag_scroll_area.setWidget(scroll_content)
         new_tag_scroll_area.setStyleSheet("""
             QScrollArea {
@@ -201,8 +197,10 @@ class MainWindow(QMainWindow):
             }
         """)
 
-     
+        
         self.tag_list_layout.addWidget(new_tag_scroll_area)
+        
+
         self.left_panel_layout.addWidget(self.tag_list, stretch=7)
 
 
@@ -212,7 +210,7 @@ class MainWindow(QMainWindow):
         self.recent_tag_panel.setMinimumWidth(250)
         self.recent_tag_panel.setMinimumHeight(50)
         self.recent_tag_panel.setMaximumHeight(70)
-        self.recent_tag_panel.setStyleSheet(self.widgets_next)
+        self.recent_tag_panel.setStyleSheet(self.theme.widgets_next)
         self.left_panel_layout.addWidget(self.recent_tag_panel, stretch=1)
 
         self.recent_tag_panel_layout = QHBoxLayout(self.recent_tag_panel)
@@ -223,26 +221,26 @@ class MainWindow(QMainWindow):
 
         self.recent_list = QWidget(self.left_panel)
         self.recent_list.setMinimumWidth(250)
-        self.recent_list.setMinimumHeight(30)
-        self.recent_list.setStyleSheet(self.widgets)
+        self.recent_list.setMinimumHeight(200)
+        self.recent_list.setStyleSheet(self.theme.widgets)
 
         self.recent_list_layout = QVBoxLayout()
+        self.recent_list_layout.setSpacing(0)
+        self.recent_list_layout.setContentsMargins(0,0,0,0)
         self.recent_list.setLayout(self.recent_list_layout)
 
-        scroll_area = QScrollArea()
-        scroll_area.setWidgetResizable(True)
-        scroll_area.setStyleSheet("border: none;") 
+        recent_scroll_area = QScrollArea()
+        recent_scroll_area.setWidgetResizable(True)
 
-        scroll_content = QWidget()
-        scroll_layout = QVBoxLayout()
-        scroll_content.setLayout(scroll_layout)
+        recent_scroll_content = QWidget()
+        recent_scroll_layout = QVBoxLayout()
+        recent_scroll_layout.setContentsMargins(0,0,0,0)
+        recent_scroll_layout.setSpacing(0)
+        recent_scroll_layout.addStretch()
+        recent_scroll_content.setLayout(recent_scroll_layout)
 
-        for i in range(100):
-            button = QPushButton(f"tag {i + 1}")
-            scroll_layout.addWidget(button)
-
-        scroll_area.setWidget(scroll_content)
-        scroll_area.setStyleSheet("""
+        recent_scroll_area.setWidget(recent_scroll_content)
+        recent_scroll_area.setStyleSheet("""
             QScrollArea {
                 border: none;
                 background-color: #1e1e1e;
@@ -304,9 +302,18 @@ class MainWindow(QMainWindow):
             }
         """)
 
-      
-        self.recent_list_layout.addWidget(scroll_area)
+        
+        self.recent_list_layout.addWidget(recent_scroll_area)
+   
+        
         self.left_panel_layout.addWidget(self.recent_list, stretch=13)
+
+
+        self.new_tag_list = TagList(scroll_layout, recent_scroll_layout)
+        self.new_tag_list.load_new_tag_buttons()
+
+        
+
 
       
       
@@ -318,7 +325,7 @@ class MainWindow(QMainWindow):
         self.top_bar.setMinimumHeight(30)
         self.top_bar.setMaximumHeight(70)
         self.top_bar.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.top_bar.setStyleSheet(self.ui)
+        self.top_bar.setStyleSheet(self.theme.ui)
         grid_layout.addWidget(self.top_bar, 0, 1)
 
         self.top_bar_layout = QHBoxLayout(self.top_bar)
@@ -327,7 +334,7 @@ class MainWindow(QMainWindow):
 
         self.search_bar_widget = QWidget(self.top_bar)
         self.search_bar_widget.setMinimumWidth(300)
-        self.search_bar_widget.setStyleSheet(self.widgets_next)
+        self.search_bar_widget.setStyleSheet(self.theme.widgets_next)
         self.top_bar_layout.addWidget(self.search_bar_widget)
 
         self.search_bar_widget_layout = QHBoxLayout(self.search_bar_widget)
@@ -338,7 +345,7 @@ class MainWindow(QMainWindow):
         self.save_search.setCursor(Qt.PointingHandCursor)
         self.save_search.setMinimumHeight(30)
         self.save_search.setMaximumWidth(170)
-        self.save_search.setStyleSheet(self.buttons)
+        self.save_search.setStyleSheet(self.theme.buttons)
         self.search_bar_widget_layout.addWidget(self.save_search)
 
         text_box = QLineEdit(self.search_bar_widget)
@@ -364,14 +371,14 @@ class MainWindow(QMainWindow):
         self.set_size.setMinimumHeight(30)
         self.set_size.setMinimumWidth(70)
         self.set_size.setMaximumWidth(170)
-        self.set_size.setStyleSheet(self.buttons)
+        self.set_size.setStyleSheet(self.theme.buttons)
         self.search_bar_widget_layout.addWidget(self.set_size)
 
         self.main_area = QWidget(self.main_window)
         self.main_area.setMinimumWidth(300)
         self.main_area.setMinimumHeight(600)
         self.main_area.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.main_area.setStyleSheet(self.ui)
+        self.main_area.setStyleSheet(self.theme.ui)
         grid_layout.addWidget(self.main_area, 1, 1)
      
 #============== bottom bar ====================
@@ -381,7 +388,7 @@ class MainWindow(QMainWindow):
         self.bottom_bar.setMaximumHeight(50)
         self.bottom_bar.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.bottom_bar.setObjectName("bottomBar")
-        self.bottom_bar.setStyleSheet(self.widgets_next)
+        self.bottom_bar.setStyleSheet(self.theme.widgets_next)
         grid_layout.addWidget(self.bottom_bar, 2, 1)
 
         self.bottom_bar_layout = QHBoxLayout(self.bottom_bar)
@@ -389,7 +396,7 @@ class MainWindow(QMainWindow):
         self.bottom_bar_layout.setSpacing(0)
 
         self.bottom_bar_area = QWidget(self.bottom_bar)
-        self.bottom_bar_area.setStyleSheet(self.widgets_next)
+        self.bottom_bar_area.setStyleSheet(self.theme.widgets_next)
 
         self.bottom_bar_area_layout = QHBoxLayout(self.bottom_bar_area)
         self.bottom_bar_area_layout.setContentsMargins(0, 0, 0, 0)
@@ -397,7 +404,7 @@ class MainWindow(QMainWindow):
         self.bottom_bar_layout.addWidget(self.bottom_bar_area, alignment=Qt.AlignCenter)
 
         self.page_count_area = QWidget(self.bottom_bar_area)
-        self.page_count_area.setStyleSheet(self.ui)  
+        self.page_count_area.setStyleSheet(self.theme.ui)  
         self.page_count_area.setMaximumWidth(600)
         self.page_count_area.setMinimumHeight(20)
         self.bottom_bar_area_layout.addWidget(self.page_count_area, alignment=Qt.AlignCenter)
@@ -407,26 +414,26 @@ class MainWindow(QMainWindow):
         self.page_count_area_layout.setSpacing(25) 
 
         self.first_page = QPushButton("<<", self.page_count_area)
-        self.first_page.setStyleSheet(self.buttons)       
+        self.first_page.setStyleSheet(self.theme.buttons)       
         self.page_count_area_layout.addWidget(self.first_page, alignment=Qt.AlignLeft)
 
         self.previous_page =  QPushButton("<", self.page_count_area)
-        self.previous_page.setStyleSheet(self.buttons)       
+        self.previous_page.setStyleSheet(self.theme.buttons)       
         self.previous_page.setCursor(Qt.PointingHandCursor)
         self.page_count_area_layout.addWidget(self.previous_page, alignment=Qt.AlignLeft)
 
         self.page_count =  QLabel("Page 3 of 14, 377 items", self.page_count_area)
-        self.page_count.setStyleSheet(self.buttons)       
+        self.page_count.setStyleSheet(self.theme.buttons)       
         self.page_count.setMinimumWidth(100)
         self.page_count_area_layout.addWidget(self.page_count, alignment=Qt.AlignCenter)
 
         self.next_page =  QPushButton(">", self.page_count_area)
-        self.next_page.setStyleSheet(self.buttons)       
+        self.next_page.setStyleSheet(self.theme.buttons)       
         self.next_page.setCursor(Qt.PointingHandCursor)
         self.page_count_area_layout.addWidget(self.next_page, alignment=Qt.AlignRight)
 
         self.last_page =  QPushButton(">>", self.page_count_area)
-        self.last_page.setStyleSheet(self.buttons)       
+        self.last_page.setStyleSheet(self.theme.buttons)       
         self.last_page.setCursor(Qt.PointingHandCursor)
         self.page_count_area_layout.addWidget(self.last_page, alignment=Qt.AlignRight)
 
@@ -439,8 +446,12 @@ class MainWindow(QMainWindow):
 
         self.close()
 
-        with open('profiles.json', 'r') as f:
-            profiles_names_data = json.load(f)
+        try:
+            with open('profiles.json', 'r') as f:
+                profiles_names_data = json.load(f)
+        except FileNotFoundError:
+    
+            print("json not found")
 
         self.selected_user = profiles_names_data["selected user"]
 
@@ -456,28 +467,29 @@ class MainWindow(QMainWindow):
             
     def on_profile_closed(self):
 
+        try:
+            with open('profiles.json', 'r') as f:
+                profiles_names_data = json.load(f)
+        except FileNotFoundError:
+            print("json not found")
 
-        with open('profiles.json', 'r') as f:
-            profiles_names_data = json.load(f)
-
+            
         self.selected_user = profiles_names_data["selected user"]
-        print(self.selected_user)
+        
 
         if self.selected_user == None:
             self.close()
-  
-        
-        
-        
-    
-    
-    
-              
-        
-        
-    
-        
 
+    def open_tag_window(self):
+            self.tag_window = TagWindow(self.new_tag_list)
+            mouse_pos = QCursor.pos()
+
+         
+            self.tag_window.move(mouse_pos)
+
+            self.tag_window.show()
+            
+  
 
 def main():
     app = QApplication(sys.argv)

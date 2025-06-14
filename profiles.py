@@ -90,7 +90,7 @@ class ProfileManager(QDialog):
             self.add_profile_widget_layout.setSpacing(0)
             self.add_profile_widget_layout.setContentsMargins(0, 0, 0, 0)
 
-            profile_button = QPushButton(QIcon(r"C:\Users\Jon\Desktop\New folder\2bda51ca60cc3b5daaa8e062eb880430.jpg"), "")
+            profile_button = QPushButton(QIcon(r"2bda51ca60cc3b5daaa8e062eb880430.jpg"), "")
             profile_button.setIconSize(QSize(150,150))
             profile_button.setFixedSize(150,150)
 
@@ -163,7 +163,7 @@ class ProfileManager(QDialog):
                 self.add_profile_name_layout.setSpacing(0)
                 self.add_profile_name_layout.setContentsMargins(0, 0, 0, 0)
 
-                profile_button = QPushButton(QIcon(r"C:\Users\Jon\Desktop\New folder\2bda51ca60cc3b5daaa8e062eb880430.jpg"), "")
+                profile_button = QPushButton(QIcon(r"2bda51ca60cc3b5daaa8e062eb880430.jpg"), "")
                 profile_button.setIconSize(QSize(150,150))
                 profile_button.setFixedSize(150,150)
 
@@ -224,7 +224,6 @@ class ProfileManager(QDialog):
         profile_name = self.input_box.text()
         self.profile_buttons.append(profile_name)
 
-        #directory_name =profile_name
 
         try:
             os.mkdir("profiles")
@@ -247,6 +246,15 @@ class ProfileManager(QDialog):
 
         with open('profiles.json', 'w') as f:
                 json.dump(profile_data, f, indent=4)
+
+
+        thumbnail_directory = f"profiles/{profile_name}/thumbnails"
+
+
+        try:
+            os.makedirs(thumbnail_directory)
+        except FileExistsError:
+            print('Directory already exists')
         
         self.refresh_profiles()
 
@@ -282,27 +290,9 @@ class ProfileManager(QDialog):
         self.closed.emit()
         super().closeEvent(event)
 
-
-    
-
-
-
-        
-
-
-   
-
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = ProfileManager()
     window.show()
     sys.exit(app.exec_())
 
-
-#"""for i in range(3):
-    #        profile_button = QPushButton(QIcon(r"C:\Users\Jon\Desktop\Coding\Booru Sort Lite\2bda51ca60cc3b5daaa8e062eb880430.jpg"), "")
-  #          profile_button.setIconSize(QSize(100, 100))
-  #          profile_button.setFixedSize(100,100)
-            
-  #          self.layout.addWidget(profile_button, 0, i)
-  #          profile_button.clicked.connect(self.open_profile)"""

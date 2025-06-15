@@ -7,6 +7,7 @@ from profiles import ProfileManager
 from taglist import TagList, TagWindow
 from PyQt5.QtGui import QCursor
 from theme import Theme
+from import_entities import ImportEntities
 
 import json
 
@@ -16,6 +17,9 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Booru Sort Lite")
         self.setGeometry(0, 0, 1920, 1080)
         self.setStyleSheet("background-color: #010c1c;")
+
+        QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
+        QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
 
         self.theme = Theme(theme=1)
      
@@ -69,11 +73,7 @@ class MainWindow(QMainWindow):
 
 
         profile_select_button.clicked.connect(self.open_profile)
-
-    
-
-
-    
+     
         #======= add tag and hide new tag list =====================================
         self.add_tag_panel = QWidget(self.left_panel)
         self.add_tag_panel.setMinimumWidth(250)
@@ -85,7 +85,7 @@ class MainWindow(QMainWindow):
         self.add_tag_panel_layout = QHBoxLayout(self.add_tag_panel)
 
         self.tag_label = QLabel("new tags")
-        self.tag_label.setStyleSheet("color: white; font-size: 24px; font-weight: bold;")
+        self.tag_label.setStyleSheet(self.theme.qlabel)
         self.tag_label.setMinimumHeight(30)
         self.add_tag_panel_layout.addWidget(self.tag_label, alignment=Qt.AlignLeft)
 
@@ -312,6 +312,14 @@ class MainWindow(QMainWindow):
         self.new_tag_list = TagList(scroll_layout, recent_scroll_layout)
         self.new_tag_list.load_new_tag_buttons()
 
+       
+
+    
+      
+
+        
+      
+       
         
 
 
@@ -380,7 +388,14 @@ class MainWindow(QMainWindow):
         self.main_area.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.main_area.setStyleSheet(self.theme.ui)
         grid_layout.addWidget(self.main_area, 1, 1)
-     
+
+        self.main_area_layout = QVBoxLayout(self.main_area)
+
+      
+
+        self.import_entities = ImportEntities(self.main_area_layout)
+        self.new_tag_list.import_entities.connect(self.import_entities.import_entity_box)
+        
 #============== bottom bar ====================
 
         self.bottom_bar = QWidget(self.main_window)
@@ -464,6 +479,7 @@ class MainWindow(QMainWindow):
                
     def open_profile(self):
             self.profiles = ProfileManager(self)
+            self.profiles.refresh_buttons.connect(self.new_tag_list.load_new_tag_buttons)
             
     def on_profile_closed(self):
 
@@ -488,6 +504,8 @@ class MainWindow(QMainWindow):
             self.tag_window.move(mouse_pos)
 
             self.tag_window.show()
+
+
             
   
 

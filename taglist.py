@@ -3,91 +3,118 @@ from PyQt5.QtWidgets import (
     QLabel, QLineEdit, QApplication, QSizePolicy, QTextEdit
 )
 from PyQt5.QtGui import QFont, QIcon, QMouseEvent, QTextCursor, QCursor, QFont
-from PyQt5.QtCore import Qt, QSize, pyqtSignal, QPoint
+from PyQt5.QtCore import Qt, QSize, pyqtSignal, QPoint, QObject
+
+from import_entities import ImportEntities
 import json
 import os
 import sys
 
 
-class TagList():
+class TagList(QObject):
+    import_entities = pyqtSignal(str)
     def __init__(self, new_tag_list=None, recent_tag_list=None):
+        super().__init__()
 
         self.new_tag_list = new_tag_list
         self.recent_tag_list = recent_tag_list
 
         self.font = QFont('Roboto')
 
-        self.tag_list = {
-    "cats": 345,
-    "nature": 12823,
-    "dogs": 10560,
-    "holidays": 2457,
-    "beach": 42334,
-    "mountains": 9876,
-    "cityscape": 12345,
-    "food": 987,
-    "sports": 14312,
-    "landscape": 6795,
-    "architecture": 8754,
-    "animals": 45678,
-    "people": 87654,
-    "cars": 123456,
-    "flowers": 34567,
-    "wildlife": 43210,
-    "travel": 23456,
-    "street": 3456,
-    "sunset": 7654,
-    "portrait": 876,
-    "art": 5432,
-    "snow": 6789,
-    "winter": 1234,
-    "summer": 2345,
-    "spring": 67890,
-    "fall": 12345,
-    "vacation": 89012,
-    "adventure": 4321,
-    "fashion": 23456,
-    "music": 12345,
-    "photography": 6789,
-    "urban": 23456,
-    "history": 9876,
-    "culture": 1234,
-    "technology": 45678,
-    "design": 2345,
-    "night": 8765,
-    "festival": 23456,
-    "nightlife": 12345,
-    "events": 56789,
-    "fitness": 23456,
-    "shopping": 6789,
-    "wedding": 123456,
-    "family": 34567,
-    "friends": 12345,
-    "mountain": 8765,
-    "landscapes": 3456,
-    "sky": 9876,
-    "ocean": 56789,
-    "desert": 12345
-}
-
+        self.tag_list = {}
         self.recent_list = {}
 
         self.recent_tag = False
+        self.load_recent_tags = False
+   
+    
 
     def load_new_tag_buttons(self):
 
-    
-         
+        for i in reversed(range(self.recent_tag_list.count())):
+            widget = self.recent_tag_list.itemAt(i).widget()
+            if widget is not None:
+                widget.deleteLater()
+                #print(f'cleared {widget}')
+                self.tag_list.clear()
+
+        for i in reversed(range(self.new_tag_list.count())):
+            widget = self.new_tag_list.itemAt(i).widget()
+            if widget is not None:
+                widget.deleteLater()
+                #print(f'cleared {widget}')
+                self.tag_list.clear()
+
+
+        with open('profiles.json', 'r') as f:
+            selected_user = json.load(f)
+            self.current_user = selected_user["selected user"]
+
+        self.nested_directory = f"profiles/{self.current_user}"
+
+        os.makedirs(self.nested_directory, exist_ok=True)
+        print(f'current user: {self.current_user}')
+       
+        try:
+            self.new_tag_path = os.path.join(self.nested_directory, f'new tags.json')
+
+            with open(self.new_tag_path, 'r') as f:
+                tag_data = json.load(f)
+
+                self.tag_list = tag_data
+        except FileNotFoundError:
+             self.tag_list = {}
+             print('no json yet')
+
+
+        try:
+            self.recent_tag_path = os.path.join(self.nested_directory, f'recent tags.json')
+
+            with open(self.recent_tag_path, 'r') as f:
+                recent_tag_data = json.load(f)
+
+                self.recent_list = recent_tag_data
+        except FileNotFoundError:
+             print('no json yet')
+             self.recent_list = {}
+
+        
         for tag_name in list(self.tag_list)[:50][::-1]:
-            entity_count = self.tag_list[tag_name]
+              entity_count = self.tag_list[tag_name]
+              self.create_new_tag_buttons(tag_name, entity_count)
+              
+    
+        self.load_recent_tags = True
+
+        for tag_name in list(self.recent_list)[:100][::-1]:
+            entity_count = self.recent_list[tag_name]
             self.create_new_tag_buttons(tag_name, entity_count)
 
+
+        self.load_recent_tags = False
+
+
     def add_tags(self, tags):
+
         for tag_name in tags:
             if tag_name not in self.tag_list:
                 self.tag_list = {tag_name: 0, **self.tag_list}
                 self.create_new_tag_buttons(tag_name, 0)
-                print(self.tag_list)
+
+                data = {
+                    f"{tag_name}": "",
+                }
+
+                tag_path_file = os.path.join(self.nested_directory, f'{tag_name}.json')
+                with open(tag_path_file, 'w') as f:
+                    json.dump(data, f, indent=4)
+
+
+        with open(self.new_tag_path, 'w') as f:
+                json.dump(self.tag_list, f, indent=4)
+
+
+        print(f'addted {tag_name} to {self.current_user}')
                 
 
     def create_new_tag_buttons(self, tag_name, entity_count):
@@ -97,7 +124,7 @@ class TagList():
                 tag_button_widget.setStyleSheet(
                                         "background-color: #112233")
                 
-                if self.recent_tag == False:
+                if self.recent_tag == False and self.load_recent_tags == False:
                     self.new_tag_list.insertWidget(0, tag_button_widget)
                 else:
                     self.recent_tag_list.insertWidget(0, tag_button_widget)
@@ -131,6 +158,7 @@ class TagList():
 
                 import_pics = QPushButton("+")
                 import_pics.setFont(self.font)
+                import_pics.clicked.connect(lambda: self.import_entities.emit(tag_name))
                 import_pics.setMinimumWidth(20)
                 import_pics.setStyleSheet("QPushButton { color: white; background-color: #112233; border: none; font-size: 29px; } QPushButton:hover { color: #00FFFF; }")
                 tag_button_layout.addWidget(import_pics, alignment=Qt.AlignRight)
@@ -145,7 +173,6 @@ class TagList():
                 tag_name_list = list(self.recent_list.keys())
                     
                 widget_position = tag_name_list.index(recent_tag_name)
-                print(widget_position)
              
                 widget = self.recent_tag_list.itemAt(widget_position).widget()
                 widget.deleteLater()
@@ -157,8 +184,16 @@ class TagList():
                 self.create_new_tag_buttons(recent_tag_name, entity_count)
 
             self.recent_list = {recent_tag_name: entity_count, **self.recent_list}
+            
+        
+            with open( self.recent_tag_path, 'w') as f:
+                json.dump(self.recent_list, f, indent=4)      
+                 
 
             print(self.recent_list)
+            print(f'the tag list should be {self.tag_list}')
+
+
 
 
     def delete_tag(self, tag_name, entity_count):
@@ -166,7 +201,39 @@ class TagList():
         result = dialog.exec_()
 
         if result == QDialog.Accepted:
-            print('dfs')
+            
+            if tag_name in self.tag_list:
+                tag_name_list = list(self.tag_list.keys())
+                    
+                widget_position = tag_name_list.index(tag_name)
+             
+                widget = self.new_tag_list.itemAt(widget_position).widget()
+                widget.deleteLater()
+                del self.tag_list[tag_name]
+
+                with open(self.new_tag_path, 'w') as f:
+                    json.dump(self.tag_list, f, indent=4) 
+
+                file_path = os.path.join(self.nested_directory, f'{tag_name}.json')
+
+                if os.path.exists(file_path):
+                    os.remove(file_path)
+
+            if tag_name in self.recent_list:
+                tag_name_list = list(self.recent_list.keys())
+                    
+                widget_position = tag_name_list.index(tag_name)
+             
+                widget = self.recent_tag_list.itemAt(widget_position).widget()
+                widget.deleteLater()
+                del self.recent_list[tag_name]
+
+                with open(self.recent_tag_path, 'w') as f:
+                    json.dump(self.recent_list, f, indent=4)
+
+            print(self.tag_list)
+            print(self.recent_list)
+        
     
 class TagWindow(QDialog):
     def __init__(self, new_tag_list):
@@ -228,15 +295,12 @@ class TagWindow(QDialog):
         return super().eventFilter(source, event)
 
     def on_submit_clicked(self):
-        # Get the input text from the text box, remove leading/trailing whitespace
+       
         tag_name_list = self.text_box.toPlainText().strip()
-
         tag_names = tag_name_list.split()
 
       
         self.new_tag_list.add_tags(tag_names)
-
-      
         self.accept()  
 
 
@@ -250,8 +314,9 @@ class ConfirmDeleteDialog(QDialog):
         self.setFixedSize(500, 250)  
 
         layout = QVBoxLayout()
-      
-        label = QLabel(f"Delete '{tag_name}'?\n {entity_count} items will be deleted!")
+
+        label = QLabel(f"Delete '{tag_name}'?\n{entity_count} item{'s' if entity_count != 1 else ''} will be deleted!" if entity_count else f"Delete '{tag_name}'?")
+
         label.setStyleSheet("font-size: 25px;")
         label.setAlignment(Qt.AlignCenter)
         layout.addWidget(label)

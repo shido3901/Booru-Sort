@@ -4,6 +4,7 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtGui import QFont, QIcon
 from PyQt5.QtCore import Qt, QSize, pyqtSignal
+from taglist import TagList
 import json
 import os
 import shutil
@@ -33,6 +34,7 @@ class DeleteProfileDialog(QDialog):
 
 class ProfileManager(QDialog):
     closed = pyqtSignal()
+    refresh_buttons = pyqtSignal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -62,6 +64,8 @@ class ProfileManager(QDialog):
 
         self.col_cnt = 0
         self.row = 0
+
+        
 
         
 
@@ -257,6 +261,7 @@ class ProfileManager(QDialog):
             print('Directory already exists')
         
         self.refresh_profiles()
+        self.close()
 
 
     def refresh_profiles(self):
@@ -281,8 +286,10 @@ class ProfileManager(QDialog):
         with open('profiles.json', 'w') as f:
                 json.dump(profile_data, f, indent=4)
 
+           
         print(name)
-        self.refresh_profiles()
+
+        self.refresh_buttons.emit()
 
         self.close()
 

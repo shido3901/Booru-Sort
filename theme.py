@@ -11,6 +11,7 @@ class Theme():
                 self.widgets = "color: black; background-color: yellow; border: 2px dashed red; "
                 self.widgets_next = "color: black; background-color: green; border: 2px dashed red;"
                 self.buttons = "QPushButton { color: white; background-color: #112233; border: none; font-size: 25px; } QPushButton:hover { color: #00FFFF; }"
+                self.qlabel = "color: black; background-color: yellow; border: 2px dashed red; "
         
             case 1:
 
@@ -19,3 +20,4 @@ class Theme():
                 self.widgets = "color: white; background-color: #112233; border: 2px solid #1f618d; border-radius: 10px; border: none;" #<--- Maybe keep?
                 self.widgets_next = "color: white; background-color: #010c1c; border: 2px solid #1f618d; border-radius: 10px;"
                 self.buttons = "QPushButton { color: white; background-color: #112233; border: none; font-size: 25px; } QPushButton:hover { color: #00FFFF; }"
+                self.qlabel = "color: white; font-size: 24px; font-weight: bold;"
